@@ -19,6 +19,7 @@ A **Smart Shopper Agent** egy többügynökös Go backend alkalmazás mobil appl
 
 ## 3. Jelenlegi állapot
 Az **1-5. fázis**, valamint a **6. és 7. fázis** sikeresen elkészült:
+- A projekt verziókövetése inicializálásra került a főágon (`main`), és sikeresen feltöltésre került a GitHub-ra: [smart-shopper-agent GitHub](https://github.com/pohi99999/smart-shopper-agent.git).
 - A projekt könyvtárszerkezete és a Go modul inicializálása megtörtént.
 - Az MCP eszközök vázai kidolgozásra és integrálásra kerültek.
 - A RoutePlanner MCP eszköz sikeresen integrálásra került a valós OSRM (Open Source Routing Machine) API-val éles útvonaltervezéshez.
