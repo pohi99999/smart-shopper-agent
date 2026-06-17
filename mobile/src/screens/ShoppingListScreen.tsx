@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,12 +12,31 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { optimizeShoppingRoute, OptimizeResponse } from '../services/api';
 
 export default function ShoppingListScreen() {
   const [inputText, setInputText] = useState('Kérek 10 tojást és 1 kenyeret.');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<OptimizeResponse | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({});
+          setCoords({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          });
+        }
+      } catch (error) {
+        console.warn('Hiba a kezdeti helymeghatározásnál:', error);
+      }
+    })();
+  }, []);
 
   const handleOptimize = async () => {
     if (!inputText.trim()) {
@@ -28,10 +47,33 @@ export default function ShoppingListScreen() {
     setLoading(true);
     setResult(null);
 
+    let lat = 47.4979;
+    let lon = 19.0402;
+
     try {
-      // Budapest központ koordináták
-      const lat = 47.4979;
-      const lon = 19.0402;
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        lat = loc.coords.latitude;
+        lon = loc.coords.longitude;
+        setCoords({ latitude: lat, longitude: lon });
+      } else {
+        Alert.alert(
+          'Helyadatok megtagadva',
+          'A rendszer Budapest központjával tervez útvonalat.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.warn('Hiba a helymeghatározás során:', error);
+      Alert.alert(
+        'Helyadat hiba',
+        'A rendszer Budapest központjával tervez útvonalat.',
+        [{ text: 'OK' }]
+      );
+    }
+
+    try {
       const response = await optimizeShoppingRoute(inputText, lat, lon);
       setResult(response);
     } catch (error) {

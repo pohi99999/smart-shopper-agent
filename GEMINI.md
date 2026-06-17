@@ -17,7 +17,7 @@ A **Smart Shopper Agent** egy többügynökös Go backend alkalmazás mobil appl
 ### Adatstruktúrák (internal/models/)
 - **shopping.go** ([shopping.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/models/shopping.go)): A bevásárlólista (ShoppingList), tételek (ShoppingItem) és az útvonalterv (RoutePlan) struktúrái.
 
-Az **1-8. fázis** sikeresen elkészült:
+Az **1-9. fázis** sikeresen elkészült:
 - A projekt verziókövetése inicializálásra került a főágon (`main`), és sikeresen feltöltésre került a GitHub-ra: [smart-shopper-agent GitHub](https://github.com/pohi99999/smart-shopper-agent.git).
 - A projekt könyvtárszerkezete és a Go modul inicializálása megtörtént.
 - Az MCP eszközök vázai kidolgozásra és integrálásra kerültek.
@@ -33,6 +33,10 @@ Az **1-8. fázis** sikeresen elkészült:
 - Elkészült az első mobil képernyő (7. fázis):
   - Létrejött a `mobile/src/screens/ShoppingListScreen.tsx` képernyő modern, Apple stílusú dizájnnal, amely kezelni tudja a szabad szöveges bevitelt, a Budapest koordinátákkal történő optimalizálás indítását, a hálózati kérés alatti betöltési állapotot, valamint a kapott útvonalterv lépéseit és a becsült végösszeget.
   - Az `App.tsx` frissítésre került, hogy a `ShoppingListScreen` legyen az alkalmazás fő belépési pontja.
+- A GPS helymeghatározás integrálása a mobilalkalmazásba megtörtént (9. fázis):
+  - Telepítésre került az `expo-location` modul.
+  - A `ShoppingListScreen` komponens kiegészült kezdeti és gombnyomáskori engedélykéréssel, pozíció lekérdezéssel, valamint a valós koordináták backend felé történő továbbításával.
+  - Kialakításra került egy hibakezelő Alert visszajelzés és a biztonságos budapesti fallback koordináták használata helyadatok elutasítása/hiba esetén.
 
 ## 4. Következő feladatok
 - Térképes vizualizáció (pl. react-native-maps) integrálása az útvonalterv megjelenítéséhez a mobilképernyőn.
