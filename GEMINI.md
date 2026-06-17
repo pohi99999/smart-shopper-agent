@@ -37,6 +37,10 @@ Az **1-9. fázis** sikeresen elkészült:
   - Telepítésre került az `expo-location` modul.
   - A `ShoppingListScreen` komponens kiegészült kezdeti és gombnyomáskori engedélykéréssel, pozíció lekérdezéssel, valamint a valós koordináták backend felé történő továbbításával.
   - Kialakításra került egy hibakezelő Alert visszajelzés és a biztonságos budapesti fallback koordináták használata helyadatok elutasítása/hiba esetén.
+- Helyi zalaegerszegi adatok integrálása a backendbe és a hardcoded koordináták megszüntetése (10. fázis):
+  - Frissítésre került a `prices.json` adatbázis fájl, hogy a termékárak mellett az Aldi és Interspar zalaegerszegi boltjainak valós koordinátáit is tartalmazza.
+  - A `PriceScraper` MCP eszköz kiegészült a `ShopData` struktúrával és a `GetShopCoordinates(shopChain string)` metódussal a koordináták dinamikus kiolvasásához.
+  - Az `Optimizer` ügynök immár injektált függőségként megkapja a `PriceScraper`-t, és az útvonaltervezés során a korábbi hardcoded értékek helyett az adatbázisból dinamikusan lekérdezett bolt koordinátákat használja.
 
 ## 4. Következő feladatok
 - Térképes vizualizáció (pl. react-native-maps) integrálása az útvonalterv megjelenítéséhez a mobilképernyőn.

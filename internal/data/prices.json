@@ -1,14 +1,24 @@
 {
   "Aldi": {
-    "tojás": 450.0,
-    "kenyér": 450.0,
-    "tej": 280.0,
-    "alma": 399.0
+    "coordinates": {
+      "latitude": 46.8451,
+      "longitude": 16.8455
+    },
+    "prices": {
+      "tojás": 450.0,
+      "kenyér": 450.0,
+      "tej": 280.0
+    }
   },
   "Interspar": {
-    "tojás": 520.0,
-    "kenyér": 520.0,
-    "tej": 310.0,
-    "alma": 449.0
+    "coordinates": {
+      "latitude": 46.8413,
+      "longitude": 16.8521
+    },
+    "prices": {
+      "tojás": 520.0,
+      "kenyér": 520.0,
+      "tej": 310.0
+    }
   }
 }

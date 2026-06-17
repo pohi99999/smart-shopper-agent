@@ -9,27 +9,26 @@ const OptimizerSystemPrompt = "You are an expert route and budget optimizer that
 
 type Optimizer struct {
 	planner *mcp.RoutePlanner
+	scraper *mcp.PriceScraper
 }
 
-func NewOptimizer(planner *mcp.RoutePlanner) *Optimizer {
+func NewOptimizer(planner *mcp.RoutePlanner, scraper *mcp.PriceScraper) *Optimizer {
 	return &Optimizer{
 		planner: planner,
+		scraper: scraper,
 	}
 }
 
 func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64, userCoords mcp.Coordinates) (models.RoutePlan, error) {
-	// Boltok koordinátái
-	shopCoords := map[string]mcp.Coordinates{
-		"Aldi":      {Latitude: 47.4800, Longitude: 19.0600},
-		"Interspar": {Latitude: 47.5100, Longitude: 19.0200},
-	}
-
 	bestShop := ""
 	minCost := -1.0
 
 	for shopName, price := range prices {
-		coords := shopCoords[shopName]
-		_, err := o.planner.CalculateRoute(mcp.RouteRequest{
+		coords, err := o.scraper.GetShopCoordinates(shopName)
+		if err != nil {
+			return models.RoutePlan{}, err
+		}
+		_, err = o.planner.CalculateRoute(mcp.RouteRequest{
 			Source:      userCoords,
 			Destination: coords,
 		})

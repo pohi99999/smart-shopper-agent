@@ -20,7 +20,7 @@ func main() {
 	// 2. Initialize Agents with injected dependencies
 	parser := agents.NewParser()
 	pricer := agents.NewPricer(scraper)
-	optimizer := agents.NewOptimizer(planner)
+	optimizer := agents.NewOptimizer(planner, scraper)
 	fmt.Printf("Initialized agents: Parser (%T), Pricer (%T), Optimizer (%T)\n", parser, pricer, optimizer)
 
 	// 3. Initialize API Handler

@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -15,6 +16,11 @@ type PriceResponse struct {
 	ShopChain   string  `json:"shop_chain"`
 	Price       float64 `json:"price"`
 	Available   bool    `json:"available"`
+}
+
+type ShopData struct {
+	Coordinates Coordinates        `json:"coordinates"`
+	Prices      map[string]float64 `json:"prices"`
 }
 
 type PriceScraper struct{}
@@ -36,8 +42,8 @@ func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
 		}, nil
 	}
 
-	var prices map[string]map[string]float64
-	if err := json.Unmarshal(data, &prices); err != nil {
+	var shops map[string]ShopData
+	if err := json.Unmarshal(data, &shops); err != nil {
 		// Ha nem sikerült parse-olni, szintén alapértelmezett ár
 		return PriceResponse{
 			ProductName: req.ProductName,
@@ -50,8 +56,8 @@ func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
 	price := 299.0
 	available := false
 
-	if shopPrices, exists := prices[req.ShopChain]; exists {
-		if p, found := shopPrices[req.ProductName]; found {
+	if shopData, exists := shops[req.ShopChain]; exists {
+		if p, found := shopData.Prices[req.ProductName]; found {
 			price = p
 			available = true
 		}
@@ -69,4 +75,23 @@ func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
 		Price:       price,
 		Available:   available,
 	}, nil
+}
+
+func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error) {
+	data, err := os.ReadFile("internal/data/prices.json")
+	if err != nil {
+		return Coordinates{}, err
+	}
+
+	var shops map[string]ShopData
+	if err := json.Unmarshal(data, &shops); err != nil {
+		return Coordinates{}, err
+	}
+
+	shopData, exists := shops[shopChain]
+	if !exists {
+		return Coordinates{}, fmt.Errorf("shop chain %s not found in database", shopChain)
+	}
+
+	return shopData.Coordinates, nil
 }
