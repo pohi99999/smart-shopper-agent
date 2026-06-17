@@ -17,7 +17,7 @@ A **Smart Shopper Agent** egy többügynökös Go backend alkalmazás mobil appl
 ### Adatstruktúrák (internal/models/)
 - **shopping.go** ([shopping.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/models/shopping.go)): A bevásárlólista (ShoppingList), tételek (ShoppingItem) és az útvonalterv (RoutePlan) struktúrái.
 
-Az **1-9. fázis** sikeresen elkészült:
+Az **1-11. fázis** sikeresen elkészült:
 - A projekt verziókövetése inicializálásra került a főágon (`main`), és sikeresen feltöltésre került a GitHub-ra: [smart-shopper-agent GitHub](https://github.com/pohi99999/smart-shopper-agent.git).
 - A projekt könyvtárszerkezete és a Go modul inicializálása megtörtént.
 - Az MCP eszközök vázai kidolgozásra és integrálásra kerültek.
@@ -27,7 +27,7 @@ Az **1-9. fázis** sikeresen elkészült:
 - Az AI ügynökök belső logikája, rendszer-promptjai kidolgozásra kerültek.
 - Elkészült a REST API HTTP szerver (`/api/v1/optimize`), amely kiszolgálja a mobil kliens kéréseit a 8080-as porton.
 - A React Native (Expo) mobil frontend inicializálása sikeresen befejeződött:
-  - Létrejött a `mobile` projekt Expo TypeScript sablonnal.
+  - Létrejött a `mobile` projekt Expo TypeScript sablon sablonnal.
   - Kialakításra került az alapvető mappa- és fájlstruktúra (`mobile/src/components`, `mobile/src/screens`, `mobile/src/services`).
   - Elkészült az API kommunikációs réteg (`mobile/src/services/api.ts`) az optimalizációs API aszinkron hívásához.
 - Elkészült az első mobil képernyő (7. fázis):
@@ -41,9 +41,12 @@ Az **1-9. fázis** sikeresen elkészült:
   - Frissítésre került a `prices.json` adatbázis fájl, hogy a termékárak mellett az Aldi és Interspar zalaegerszegi boltjainak valós koordinátáit is tartalmazza.
   - A `PriceScraper` MCP eszköz kiegészült a `ShopData` struktúrával és a `GetShopCoordinates(shopChain string)` metódussal a koordináták dinamikus kiolvasásához.
   - Az `Optimizer` ügynök immár injektált függőségként megkapja a `PriceScraper`-t, és az útvonaltervezés során a korábbi hardcoded értékek helyett az adatbázisból dinamikusan lekérdezett bolt koordinátákat használja.
+- Térképes vizualizáció integrálása a mobil frontendbe (11. fázis):
+  - Telepítésre került a `react-native-maps` modul.
+  - A `ShoppingListScreen.tsx` komponens kiegészült a térképpel, amely kezdetben a felhasználó GPS pozíciójára (vagy Budapest fallbackre) fókuszál.
+  - Kék Marker jelzi a felhasználó saját helyzetét.
+  - Sikeres optimalizálás után piros Marker-ek jelzik az optimális útvonal zalaegerszegi állomásait, megjelenítve az állomás sorszámát, a bolt nevét, és a megvásárlandó tételek listáját a buborékban.
+  - Kialakításra került a térkép kártya modern Apple-stílusú árnyékolt és lekerekített stílusozása.
 
 ## 4. Következő feladatok
-- Térképes vizualizáció (pl. react-native-maps) integrálása az útvonalterv megjelenítéséhez a mobilképernyőn.
 - Valós web-scraperek bekötése a JSON adatbázis frissítéséhez vagy a valós idejű árlekérdezéshez.
-
-
