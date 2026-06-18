@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"smart-shopper-agent/internal/models"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -87,10 +88,20 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 		return models.ShoppingList{}, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
 	apiURL := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", apiKey)
-	resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return models.ShoppingList{}, fmt.Errorf("failed to make HTTP POST request: %w", err)
+		return models.ShoppingList{}, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.ShoppingList{}, fmt.Errorf("Gemini API timeout or connection error: %w", err)
 	}
 	defer resp.Body.Close()
 

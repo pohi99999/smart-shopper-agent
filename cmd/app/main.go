@@ -28,6 +28,7 @@ func main() {
 
 	// 4. Register route
 	http.HandleFunc("/api/v1/optimize", apiHandler.OptimizeHandler)
+	http.HandleFunc("/api/v1/admin/prices", apiHandler.AdminPricesHandler)
 
 	// 5. Start Server
 	port := ":8080"
@@ -36,4 +37,3 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
-
