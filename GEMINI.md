@@ -50,3 +50,12 @@ Az **1-11. fázis** sikeresen elkészült:
 
 ## 4. Következő feladatok
 - Valós web-scraperek bekötése a JSON adatbázis frissítéséhez vagy a valós idejű árlekérdezéshez.
+
+## 13. Fázis: Jules Aszinkron Tesztelés és Optimalizálás
+- **Backend Hibakezelés:** Bevezetésre került egy strukturált `ErrorResponse` és egy `SendJSONError` segédfüggvény a `handlers.go`-ban, amely biztosítja, hogy minden HTTP hiba JSON formátumban kerüljön visszaküldésre a mobil kliensnek a plain text helyett.
+- **Backend Timeout Kezelés:** A `RoutePlanner` és a `Parser` (Gemini API) hívások mostantól 10 másodperces timeouttal rendelkező beépített `http.Client`-et használnak, elkerülve a szerver panic-ot a timeoutokból származó egyértelmű hibajelzésekkel.
+- **Backend Távolság Korlát:** Az `Optimizer` kiegészült egy logikával, ami az OSRM adatok alapján figyelmen kívül hagyja a kiindulási ponttól (GPS) 50 km-nél messzebb lévő boltokat.
+- **Backend Admin Végpont:** Létrehozásra került az `/api/v1/admin/prices` GET végpont, ami `X-Admin-Token` védelemmel van ellátva, és sikeres hitelesítés esetén teszt áradatokat szolgáltat.
+- **Backend Tesztek:** Megírásra kerültek a `parser_test.go`, `pricer_test.go`, `optimizer_test.go` és a `handlers_test.go` egység- és integrációs tesztek, elérve a 70% feletti teszt lefedettséget a kritikus csomagokon.
+- **Frontend Custom Hook Refaktorálás:** A `ShoppingListScreen.tsx` logikája, beleértve az API hívásokat és a GPS lokáció lekérést, leválasztásra került és ki lett szervezve a `mobile/src/hooks/useShoppingOptimizer.ts` custom hookba a tiszta kód alapelvek (clean code) jegyében.
+- **Frontend Típusdefiníciók:** A `mobile/src/services/api.ts` kiegészült teljes és részletes TypeScript interfészekkel a bejövő kérések, válaszok és a strukturált JSON hibaüzenetek típusbiztos kezelésére.

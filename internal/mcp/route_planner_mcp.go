@@ -50,7 +50,7 @@ func (rp *RoutePlanner) CalculateRoute(req RouteRequest) (RouteResponse, error) 
 
 	resp, err := rp.client.Get(url)
 	if err != nil {
-		return RouteResponse{}, fmt.Errorf("failed to call OSRM API: %w", err)
+		return RouteResponse{}, fmt.Errorf("OSRM API timeout or connection error: %w", err)
 	}
 	defer resp.Body.Close()
 

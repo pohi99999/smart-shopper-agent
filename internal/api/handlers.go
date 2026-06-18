@@ -22,6 +22,20 @@ func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agen
 	}
 }
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+	Code  int    `json:"code"`
+}
+
+func SendJSONError(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(ErrorResponse{
+		Error: message,
+		Code:  statusCode,
+	})
+}
+
 type OptimizeRequest struct {
 	UserInput  string          `json:"user_input"`
 	UserCoords mcp.Coordinates `json:"coords"`
@@ -34,34 +48,34 @@ type OptimizeResponse struct {
 
 func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req OptimizeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		SendJSONError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	// 1. Parser
 	shoppingList, err := h.parser.Parse(req.UserInput)
 	if err != nil {
-		http.Error(w, "Parser error: "+err.Error(), http.StatusInternalServerError)
+		SendJSONError(w, "Parser error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// 2. Pricer
 	prices, err := h.pricer.GetPrices(shoppingList)
 	if err != nil {
-		http.Error(w, "Pricer error: "+err.Error(), http.StatusInternalServerError)
+		SendJSONError(w, "Pricer error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// 3. Optimizer
 	routePlan, err := h.optimizer.Optimize(shoppingList, prices, req.UserCoords)
 	if err != nil {
-		http.Error(w, "Optimizer error: "+err.Error(), http.StatusInternalServerError)
+		SendJSONError(w, "Optimizer error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -79,7 +93,42 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	token := r.Header.Get("X-Admin-Token")
+	if token != "secret-admin-token-123" {
+		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// This is a stub implementation. In a real application, you would
+	// fetch the prices from a database or memory.
+	prices := map[string]interface{}{
+		"status": "success",
+		"data": map[string]map[string]float64{
+			"Aldi": {
+				"tej":    300,
+				"kenyer": 400,
+			},
+			"Interspar": {
+				"tej":    350,
+				"kenyer": 380,
+			},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(prices); err != nil {
+		SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
 }

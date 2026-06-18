@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"fmt"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
 )
@@ -28,7 +29,7 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 		if err != nil {
 			return models.RoutePlan{}, err
 		}
-		_, err = o.planner.CalculateRoute(mcp.RouteRequest{
+		routeResp, err := o.planner.CalculateRoute(mcp.RouteRequest{
 			Source:      userCoords,
 			Destination: coords,
 		})
@@ -36,10 +37,19 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 			return models.RoutePlan{}, err
 		}
 
+		// Skip if the distance is greater than 50 km
+		if routeResp.DistanceKM > 50.0 {
+			continue
+		}
+
 		if minCost == -1.0 || price < minCost {
 			minCost = price
 			bestShop = shopName
 		}
+	}
+
+	if bestShop == "" {
+		return models.RoutePlan{}, fmt.Errorf("no shops found within 50 km")
 	}
 
 	var items []string
@@ -56,4 +66,3 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 		Steps: []models.RouteStep{step},
 	}, nil
 }
-
