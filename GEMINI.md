@@ -51,6 +51,12 @@ Az **1-11. fázis** sikeresen elkészült:
 ## 4. Következő feladatok
 - Valós web-scraperek bekötése a JSON adatbázis frissítéséhez vagy a valós idejű árlekérdezéshez.
 
+## 12. Fázis: n8n Ingest API
+A 12. fázis fejlesztései (n8n Ingest API) sikeresen megtervezésre, implementálásra, tesztelésre és beolvasztásra kerültek a `main` ágba.
+- **Környezeti változók:** Az [.env](file:///Z:/001_Workspace/smart-shopper-agent/.env) fájl kiegészült az `ADMIN_TOKEN` beállítással az adminisztrátori műveletek biztonságos hitelesítéséhez.
+- **Ingest API Végpont:** Az [AdminPricesHandler](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go#L106) metódus kibővítésre került a `POST` kérések fogadására. Érvényes `X-Admin-Token` fejléc és strukturált JSON törzs (request body) ellenőrzése után a végpont felülírja a helyi [prices.json](file:///Z:/001_Workspace/smart-shopper-agent/internal/data/prices.json) fájl tartalmát az automatizált n8n frissítésekhez.
+- **API Tesztek:** A [handlers_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_test.go#L14) fájlban lévő `TestAdminPricesHandler` kiegészült az új POST ágakat vizsgáló tesztesetekkel (`POST Valid Token and Body` és `POST Unauthorized`), míg a korábbi hibás metódus teszt a POST helyett `PUT` metódust használ.
+
 ## 13. Fázis: Jules Aszinkron Tesztelés és Optimalizálás
 - **Ellenőrzés és Beolvasztás:** A fejlesztések tesztelése sikeresen megtörtént (a `go test ./...` hibátlanul lefutott), majd a változtatások beolvasztásra kerültek a `main` ágba és feltöltésre kerültek a távoli [smart-shopper-agent GitHub](https://github.com/pohi99999/smart-shopper-agent.git) tárolóba.
 - **Backend Hibakezelés:** Bevezetésre került egy strukturált `ErrorResponse` és egy `SendJSONError` segédfüggvény a [handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) fájlban, amely biztosítja, hogy minden HTTP hiba JSON formátumban kerüljön visszaküldésre a mobil kliensnek a plain text helyett.
