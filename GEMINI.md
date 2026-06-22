@@ -75,3 +75,24 @@ A 14. fázis fejlesztései során egy automatizált árinjektáló munkafolyamat
   - **Mock Scraper (Set Node):** Szimulált termékárakat állít elő (`prices_raw`).
   - **Data Transformation (Code Node):** JavaScript transzformáció, amely a nyers adatokat a [prices.json](file:///Z:/001_Workspace/smart-shopper-agent/internal/data/prices.json) sémájára formázza, kiegészítve a zalaegerszegi boltok GPS koordinátáival.
   - **Ingest API (HTTP Request):** Egy POST kéréssel továbbítja az adatokat a backend `/api/v1/admin/prices` [AdminPricesHandler](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go#L105) végpontjára a megfelelő `X-Admin-Token` hitelesítő fejléc használatával.
+
+## 15. Fázis: Konténerizáció
+A 15. fázis fejlesztései során elkészült a backend alkalmazás Docker konténerizációja a könnyebb hordozhatóság és futtathatóság érdekében.
+- **Dockerfile:** Létrejött egy hatékony, többlépcsős (multi-stage) [Dockerfile](file:///Z:/001_Workspace/smart-shopper-agent/Dockerfile). A builder fázisban a Go bináris (`smart-shopper-agent`) fordul le `golang:1.26-alpine` alapon, míg a végleges produkciós konténer egy minimális `alpine:latest` alapú kép, amely csak a binárist, a `.env` fájlt és a termékárakat tartalmazó [prices.json](file:///Z:/001_Workspace/smart-shopper-agent/internal/data/prices.json) fájlt tartalmazza.
+- **Docker Compose:** Elkészült a [docker-compose.yml](file:///Z:/001_Workspace/smart-shopper-agent/docker-compose.yml) konfiguráció, amely definiálja a `smart-shopper-backend` szolgáltatást.
+  - A 8080-as portot köti össze a gazdagép és a konténer között (`8080:8080`).
+  - Helyi kötetet (volume) használ a [prices.json](file:///Z:/001_Workspace/smart-shopper-agent/internal/data/prices.json) fájl perzisztálásához (`./internal/data/prices.json:/app/internal/data/prices.json`).
+  - Automatikusan betölti a környezeti változókat az `env_file` segítségével a [.env](file:///Z:/001_Workspace/smart-shopper-agent/.env) fájlból.
+- **Futtatási parancsok:**
+  - Konténerek felépítése és indítása a háttérben:
+    ```bash
+    docker compose up --build -d
+    ```
+  - Leállítás és konténerek eltávolítása:
+    ```bash
+    docker compose down
+    ```
+  - Logok megtekintése:
+    ```bash
+    docker compose logs -f
+    ```
