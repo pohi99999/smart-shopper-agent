@@ -2,10 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
+
+	"github.com/joho/godotenv"
 )
 
 type APIHandler struct {
@@ -99,36 +103,87 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	token := r.Header.Get("X-Admin-Token")
-	if token != "secret-admin-token-123" {
-		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+	if r.Method == http.MethodGet {
+		token := r.Header.Get("X-Admin-Token")
+		if token != "secret-admin-token-123" {
+			SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// This is a stub implementation. In a real application, you would
+		// fetch the prices from a database or memory.
+		prices := map[string]interface{}{
+			"status": "success",
+			"data": map[string]map[string]float64{
+				"Aldi": {
+					"tej":    300,
+					"kenyer": 400,
+				},
+				"Interspar": {
+					"tej":    350,
+					"kenyer": 380,
+				},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(prices); err != nil {
+			SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
-	// This is a stub implementation. In a real application, you would
-	// fetch the prices from a database or memory.
-	prices := map[string]interface{}{
-		"status": "success",
-		"data": map[string]map[string]float64{
-			"Aldi": {
-				"tej":    300,
-				"kenyer": 400,
-			},
-			"Interspar": {
-				"tej":    350,
-				"kenyer": 380,
-			},
-		},
-	}
+	if r.Method == http.MethodPost {
+		_ = godotenv.Load()
+		_ = godotenv.Load("../../.env")
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(prices); err != nil {
-		SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
+		adminToken := os.Getenv("ADMIN_TOKEN")
+		if adminToken == "" {
+			adminToken = "n8n-price-update-token-999"
+		}
+
+		token := r.Header.Get("X-Admin-Token")
+		if token != adminToken {
+			SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			SendJSONError(w, "Failed to read request body", http.StatusBadRequest)
+			return
+		}
+
+		var temp interface{}
+		if err := json.Unmarshal(bodyBytes, &temp); err != nil {
+			SendJSONError(w, "Invalid JSON body", http.StatusBadRequest)
+			return
+		}
+
+		filePath := "internal/data/prices.json"
+		if _, err := os.Stat(filePath); err != nil {
+			if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
+				filePath = "../../internal/data/prices.json"
+			}
+		}
+
+		if err := os.WriteFile(filePath, bodyBytes, 0644); err != nil {
+			SendJSONError(w, "Failed to save prices: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status":  "success",
+			"message": "Prices updated successfully",
+		})
 		return
 	}
 }

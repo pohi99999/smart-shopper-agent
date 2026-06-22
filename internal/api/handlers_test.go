@@ -68,7 +68,7 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Invalid Method", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", nil)
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
 		rec := httptest.NewRecorder()
 
@@ -76,6 +76,79 @@ func TestAdminPricesHandler(t *testing.T) {
 
 		if rec.Code != http.StatusMethodNotAllowed {
 			t.Errorf("Expected 405 Method Not Allowed, got %d", rec.Code)
+		}
+	})
+
+	t.Run("POST Valid Token and Body", func(t *testing.T) {
+		filePath := "../../internal/data/prices.json"
+		if _, err := os.Stat(filePath); err != nil {
+			filePath = "internal/data/prices.json"
+		}
+
+		originalData, err := os.ReadFile(filePath)
+		if err != nil {
+			t.Fatalf("Failed to read original prices.json: %v", err)
+		}
+		defer func() {
+			err := os.WriteFile(filePath, originalData, 0644)
+			if err != nil {
+				t.Errorf("Failed to restore original prices.json: %v", err)
+			}
+		}()
+
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "test-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		newPrices := map[string]interface{}{
+			"TestShop": map[string]interface{}{
+				"coordinates": map[string]float64{
+					"latitude":  47.1234,
+					"longitude": 17.5678,
+				},
+				"prices": map[string]float64{
+					"tej": 250,
+				},
+			},
+		}
+		newJSON, _ := json.Marshal(newPrices)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", bytes.NewBuffer(newJSON))
+		req.Header.Set("X-Admin-Token", "test-token-123")
+		rec := httptest.NewRecorder()
+
+		handler.AdminPricesHandler(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("Expected 200 OK, got %d. Body: %s", rec.Code, rec.Body.String())
+		}
+
+		writtenData, err := os.ReadFile(filePath)
+		if err != nil {
+			t.Fatalf("Failed to read updated prices.json: %v", err)
+		}
+		var decoded map[string]interface{}
+		if err := json.Unmarshal(writtenData, &decoded); err != nil {
+			t.Fatalf("Failed to unmarshal written prices.json: %v", err)
+		}
+		if _, exists := decoded["TestShop"]; !exists {
+			t.Errorf("Expected 'TestShop' to exist in written prices.json")
+		}
+	})
+
+	t.Run("POST Unauthorized", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "test-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", bytes.NewBuffer([]byte(`{}`)))
+		req.Header.Set("X-Admin-Token", "wrong-token")
+		rec := httptest.NewRecorder()
+
+		handler.AdminPricesHandler(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Expected 401 Unauthorized, got %d", rec.Code)
 		}
 	})
 }
