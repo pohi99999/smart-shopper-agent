@@ -1,0 +1,132 @@
+{
+  "name": "Price Updater Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-id",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "prices_raw",
+              "value": "{\\\"Aldi\\\": {\\\"tej\\\": 310, \\\"kenyer\\\": 420, \\\"tojas\\\": 60}, \\\"Interspar\\\": {\\\"tej\\\": 340, \\\"kenyer\\\": 390, \\\"tojas\\\": 58}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-scraper-id",
+      "name": "Mock Scraper",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst result = [];\n\nfor (const item of items) {\n  let rawData = item.json.prices_raw;\n  if (typeof rawData === 'string') {\n    rawData = JSON.parse(rawData);\n  }\n  \n  const formatted = {\n    \"Aldi\": {\n      \"coordinates\": {\n        \"latitude\": 46.8451,\n        \"longitude\": 16.8455\n      },\n      \"prices\": {\n        \"tojás\": Number(rawData.Aldi.tojas),\n        \"kenyér\": Number(rawData.Aldi.kenyer),\n        \"tej\": Number(rawData.Aldi.tej)\n      }\n    },\n    \"Interspar\": {\n      \"coordinates\": {\n        \"latitude\": 46.8413,\n        \"longitude\": 16.8521\n      },\n      \"prices\": {\n        \"tojás\": Number(rawData.Interspar.tojas),\n        \"kenyér\": Number(rawData.Interspar.kenyer),\n        \"tej\": Number(rawData.Interspar.tej)\n      }\n    }\n  };\n  \n  result.push({ json: formatted });\n}\n\nreturn result;"
+      },
+      "id": "data-transformation-id",
+      "name": "Data Transformation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8080/api/v1/admin/prices",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Admin-Token",
+              "value": "n8n-price-update-token-999"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "ingest-api-id",
+      "name": "Ingest API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Mock Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock Scraper": {
+      "main": [
+        [
+          {
+            "node": "Data Transformation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Transformation": {
+      "main": [
+        [
+          {
+            "node": "Ingest API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
