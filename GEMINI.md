@@ -96,3 +96,12 @@ A 15. fázis fejlesztései során elkészült a backend alkalmazás Docker kont�
     ```bash
     docker compose logs -f
     ```
+
+## 17. Fázis: Jules Aszinkron CI/CD és Frontend Tesztelés
+A 17. fázis fejlesztései során bevezetésre került egy GitHub Actions alapú CI/CD pipeline, inicializálásra kerültek a frontend tesztek, valamint fejlesztésre került a backend logolása.
+- **CI/CD Pipeline:** Elkészült a `.github/workflows/backend-ci.yml` munkafolyamat, amely automatikusan lefut a `main` ágat érintő push és pull request eseményekre. A folyamat felállítja a Go környezetet, ellenőrzi a függőségeket, lefuttatja a Go teszteket (`go test ./...`), és verifikálja a Docker kép sikeres felépítését.
+- **Frontend Tesztelés (React Native):**
+  - A `mobile` projektben konfigurálásra került a `jest` és a `@testing-library/react-native`.
+  - Elkészült a `mobile/src/services/api.test.ts` egységteszt, amely az API hívásokat mockolja és teszteli az `optimizeShoppingRoute` sikeres és hibás válaszait.
+  - Elkészült a `mobile/src/screens/ShoppingListScreen.test.tsx` render teszt, amely biztosítja a felhasználói felület alapvető elemeinek (beviteli mező, gomb) megfelelő megjelenését és interaktivitását.
+- **Backend Strukturált Logolás:** A `cmd/app/main.go` és az `internal/mcp/route_planner_mcp.go` fájlokban a hagyományos `log` csomag és a `fmt` alapú logolás lecserélésre került a Go beépített `log/slog` csomagjára. A konfigurált JSON handler professzionális, strukturált formátumban biztosítja a naplózást, amely kiválóan illeszkedik a produkciós Docker környezetekhez.
