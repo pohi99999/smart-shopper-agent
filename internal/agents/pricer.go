@@ -38,4 +38,3 @@ func (pr *Pricer) GetPrices(list models.ShoppingList) (map[string]float64, error
 
 	return totals, nil
 }
-

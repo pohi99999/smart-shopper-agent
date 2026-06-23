@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -19,13 +20,13 @@ func main() {
 	// 1. Initialize MCP tools
 	scraper := mcp.NewPriceScraper()
 	planner := mcp.NewRoutePlanner()
-	slog.Info("Initialized MCP tools", "scraper", "PriceScraper", "planner", "RoutePlanner")
+	slog.Info("Initialized MCP tools", "scraper", fmt.Sprintf("%T", scraper), "planner", fmt.Sprintf("%T", planner))
 
 	// 2. Initialize Agents with injected dependencies
 	parser := agents.NewParser()
 	pricer := agents.NewPricer(scraper)
 	optimizer := agents.NewOptimizer(planner, scraper)
-	slog.Info("Initialized agents", "parser", "Parser", "pricer", "Pricer", "optimizer", "Optimizer")
+	slog.Info("Initialized agents", "parser", fmt.Sprintf("%T", parser), "pricer", fmt.Sprintf("%T", pricer), "optimizer", fmt.Sprintf("%T", optimizer))
 
 	// 3. Initialize API Handler
 	apiHandler := api.NewAPIHandler(parser, pricer, optimizer)

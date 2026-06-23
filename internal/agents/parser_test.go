@@ -32,6 +32,9 @@ func TestParser_Parse_Mock(t *testing.T) {
 }
 
 func TestParser_Parse_Live_Error(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
 	// Let's test with a fake API key to ensure it handles the error gracefully
 	// and doesn't panic.
 	originalAPIKey := os.Getenv("GEMINI_API_KEY")

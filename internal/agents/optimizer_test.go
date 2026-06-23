@@ -1,15 +1,18 @@
 package agents
 
 import (
-	"smart-shopper-agent/internal/mcp"
-	"smart-shopper-agent/internal/models"
+	"os"
 	"strings"
 	"testing"
+
+	"smart-shopper-agent/internal/mcp"
+	"smart-shopper-agent/internal/models"
 )
 
-import "os"
-
 func TestOptimizer_Optimize(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
 	// Change to root dir so internal/data/prices.json can be found
 	os.Chdir("../..")
 	defer os.Chdir("internal/agents")
@@ -56,6 +59,9 @@ func TestOptimizer_Optimize(t *testing.T) {
 }
 
 func TestOptimizer_DistanceLimit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
 	// Change to root dir so internal/data/prices.json can be found
 	os.Chdir("../..")
 	defer os.Chdir("internal/agents")
