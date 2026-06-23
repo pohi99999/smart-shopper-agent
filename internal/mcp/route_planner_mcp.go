@@ -3,7 +3,7 @@ package mcp
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -73,14 +73,17 @@ func (rp *RoutePlanner) CalculateRoute(req RouteRequest) (RouteResponse, error) 
 	// duration is in seconds -> convert to minutes
 	durationMin := route.Duration / 60.0
 
-	log.Printf("Route calculated from (%f, %f) to (%f, %f): Distance: %.2f km, Duration: %.2f min",
-		req.Source.Latitude, req.Source.Longitude,
-		req.Destination.Latitude, req.Destination.Longitude,
-		distanceKM, durationMin)
+	slog.Info("Route calculated",
+		"source_lat", req.Source.Latitude,
+		"source_lon", req.Source.Longitude,
+		"dest_lat", req.Destination.Latitude,
+		"dest_lon", req.Destination.Longitude,
+		"distance_km", distanceKM,
+		"duration_min", durationMin,
+	)
 
 	return RouteResponse{
 		DistanceKM:  distanceKM,
 		DurationMin: durationMin,
 	}, nil
 }
-
