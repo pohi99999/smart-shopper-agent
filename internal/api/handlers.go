@@ -41,15 +41,27 @@ func SendJSONError(w http.ResponseWriter, message string, statusCode int) {
 }
 
 type OptimizeRequest struct {
-	UserInput  string          `json:"user_input"`
+	UserInput  string          `json:"user_input" example:"10 tojás és egy kenyér"`
 	UserCoords mcp.Coordinates `json:"coords"`
 }
 
 type OptimizeResponse struct {
 	RoutePlan models.RoutePlan `json:"route_plan"`
-	TotalCost float64          `json:"total_cost"`
+	TotalCost float64          `json:"total_cost" example:"1250"`
 }
 
+// OptimizeHandler godoc
+// @Summary Calculate optimized shopping route
+// @Description Extracts shopping items from natural language, fetches prices, and calculates the optimal shopping route and total cost based on the user's location.
+// @Tags optimize
+// @Accept json
+// @Produce json
+// @Param request body OptimizeRequest true "User input and coordinates"
+// @Success 200 {object} OptimizeResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 405 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /optimize [post]
 func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -102,6 +114,20 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AdminPricesHandler godoc
+// @Summary Manage shop prices
+// @Description Fetches or updates shop prices. Requires an X-Admin-Token header.
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param X-Admin-Token header string true "Admin Token"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 405 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/prices [get]
+// @Router /admin/prices [post]
 func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)

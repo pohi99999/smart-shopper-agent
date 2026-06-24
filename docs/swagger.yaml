@@ -1,0 +1,190 @@
+basePath: /api/v1
+definitions:
+  internal_api.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+    type: object
+  internal_api.OptimizeRequest:
+    properties:
+      coords:
+        $ref: '#/definitions/mcp.Coordinates'
+      user_input:
+        example: 10 tojás és egy kenyér
+        type: string
+    type: object
+  internal_api.OptimizeResponse:
+    properties:
+      route_plan:
+        $ref: '#/definitions/models.RoutePlan'
+      total_cost:
+        example: 1250
+        type: number
+    type: object
+  jules_session_7206071066034730390_internal_api.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+    type: object
+  jules_session_7206071066034730390_internal_api.OptimizeRequest:
+    properties:
+      coords:
+        $ref: '#/definitions/mcp.Coordinates'
+      user_input:
+        example: 10 tojás és egy kenyér
+        type: string
+    type: object
+  jules_session_7206071066034730390_internal_api.OptimizeResponse:
+    properties:
+      route_plan:
+        $ref: '#/definitions/models.RoutePlan'
+      total_cost:
+        example: 1250
+        type: number
+    type: object
+  mcp.Coordinates:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  models.RoutePlan:
+    properties:
+      steps:
+        items:
+          $ref: '#/definitions/models.RouteStep'
+        type: array
+    type: object
+  models.RouteStep:
+    properties:
+      items:
+        items:
+          type: string
+        type: array
+      shop_name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Backend API for the Smart Shopper Agent project.
+  title: Smart Shopper Agent API
+  version: "1.0"
+paths:
+  /admin/prices:
+    get:
+      consumes:
+      - application/json
+      description: Fetches or updates shop prices. Requires an X-Admin-Token header.
+      parameters:
+      - description: Admin Token
+        in: header
+        name: X-Admin-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+      summary: Manage shop prices
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      description: Fetches or updates shop prices. Requires an X-Admin-Token header.
+      parameters:
+      - description: Admin Token
+        in: header
+        name: X-Admin-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+      summary: Manage shop prices
+      tags:
+      - admin
+  /optimize:
+    post:
+      consumes:
+      - application/json
+      description: Extracts shopping items from natural language, fetches prices,
+        and calculates the optimal shopping route and total cost based on the user's
+        location.
+      parameters:
+      - description: User input and coordinates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/jules_session_7206071066034730390_internal_api.OptimizeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.OptimizeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse'
+      summary: Calculate optimized shopping route
+      tags:
+      - optimize
+swagger: "2.0"

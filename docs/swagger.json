@@ -1,0 +1,285 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend API for the Smart Shopper Agent project.",
+        "title": "Smart Shopper Agent API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/admin/prices": {
+            "get": {
+                "description": "Fetches or updates shop prices. Requires an X-Admin-Token header.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Manage shop prices",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin Token",
+                        "name": "X-Admin-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Fetches or updates shop prices. Requires an X-Admin-Token header.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Manage shop prices",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin Token",
+                        "name": "X-Admin-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/optimize": {
+            "post": {
+                "description": "Extracts shopping items from natural language, fetches prices, and calculates the optimal shopping route and total cost based on the user's location.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "optimize"
+                ],
+                "summary": "Calculate optimized shopping route",
+                "parameters": [
+                    {
+                        "description": "User input and coordinates",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.OptimizeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.OptimizeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/jules_session_7206071066034730390_internal_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "internal_api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api.OptimizeRequest": {
+            "type": "object",
+            "properties": {
+                "coords": {
+                    "$ref": "#/definitions/mcp.Coordinates"
+                },
+                "user_input": {
+                    "type": "string",
+                    "example": "10 tojás és egy kenyér"
+                }
+            }
+        },
+        "internal_api.OptimizeResponse": {
+            "type": "object",
+            "properties": {
+                "route_plan": {
+                    "$ref": "#/definitions/models.RoutePlan"
+                },
+                "total_cost": {
+                    "type": "number",
+                    "example": 1250
+                }
+            }
+        },
+        "jules_session_7206071066034730390_internal_api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "jules_session_7206071066034730390_internal_api.OptimizeRequest": {
+            "type": "object",
+            "properties": {
+                "coords": {
+                    "$ref": "#/definitions/mcp.Coordinates"
+                },
+                "user_input": {
+                    "type": "string",
+                    "example": "10 tojás és egy kenyér"
+                }
+            }
+        },
+        "jules_session_7206071066034730390_internal_api.OptimizeResponse": {
+            "type": "object",
+            "properties": {
+                "route_plan": {
+                    "$ref": "#/definitions/models.RoutePlan"
+                },
+                "total_cost": {
+                    "type": "number",
+                    "example": 1250
+                }
+            }
+        },
+        "mcp.Coordinates": {
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.RoutePlan": {
+            "type": "object",
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.RouteStep"
+                    }
+                }
+            }
+        },
+        "models.RouteStep": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "shop_name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

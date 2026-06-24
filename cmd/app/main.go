@@ -8,8 +8,16 @@ import (
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/api"
 	"smart-shopper-agent/internal/mcp"
+
+	_ "smart-shopper-agent/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title Smart Shopper Agent API
+// @version 1.0
+// @description Backend API for the Smart Shopper Agent project.
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	// Configure JSON logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -31,9 +39,18 @@ func main() {
 	// 3. Initialize API Handler
 	apiHandler := api.NewAPIHandler(parser, pricer, optimizer)
 
+	// Combine Middlewares
+	// Both endpoints need security headers, but optimize also needs rate limiting
+	
+	optimizeHandler := api.SecurityHeadersMiddleware(api.RateLimitMiddleware(apiHandler.OptimizeHandler))
+	adminPricesHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesHandler)
+
 	// 4. Register route
-	http.HandleFunc("/api/v1/optimize", apiHandler.OptimizeHandler)
-	http.HandleFunc("/api/v1/admin/prices", apiHandler.AdminPricesHandler)
+	http.HandleFunc("/api/v1/optimize", optimizeHandler)
+	http.HandleFunc("/api/v1/admin/prices", adminPricesHandler)
+
+	// Register Swagger route
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	// 5. Start Server
 	port := ":8080"

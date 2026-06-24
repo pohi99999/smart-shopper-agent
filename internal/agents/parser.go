@@ -56,7 +56,7 @@ type GeminiResponse struct {
 func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" || apiKey == "your_api_key_here" {
-		// A fix mock tojás és kenyér bevásárlólista
+		// Mock response if API key is not available
 		return models.ShoppingList{
 			Items: []models.ShoppingItem{
 				{Name: "tojás", Quantity: 10},
@@ -93,37 +93,58 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 	}
 
 	apiURL := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", apiKey)
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return models.ShoppingList{}, fmt.Errorf("failed to create HTTP request: %w", err)
+
+	var lastErr error
+	maxRetries := 2
+	baseDelay := 1 * time.Second
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			time.Sleep(baseDelay * time.Duration(1<<(attempt-1))) // Exponential backoff
+		}
+
+		req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return models.ShoppingList{}, fmt.Errorf("failed to create HTTP request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("Gemini API network error on attempt %d: %w", attempt+1, err)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			lastErr = fmt.Errorf("API request failed with status code %d on attempt %d", resp.StatusCode, attempt+1)
+			continue
+		}
+
+		var geminiResp GeminiResponse
+		err = json.NewDecoder(resp.Body).Decode(&geminiResp)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to decode response on attempt %d: %w", attempt+1, err)
+			continue
+		}
+
+		if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
+			lastErr = fmt.Errorf("invalid or empty response from Gemini API on attempt %d", attempt+1)
+			continue
+		}
+
+		responseText := geminiResp.Candidates[0].Content.Parts[0].Text
+
+		var shoppingList models.ShoppingList
+		if err := json.Unmarshal([]byte(responseText), &shoppingList); err != nil {
+			lastErr = fmt.Errorf("failed to parse shopping list JSON from response text on attempt %d: %w", attempt+1, err)
+			continue
+		}
+
+		// Success
+		return shoppingList, nil
 	}
-	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return models.ShoppingList{}, fmt.Errorf("Gemini API timeout or connection error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return models.ShoppingList{}, fmt.Errorf("API request failed with status code %d", resp.StatusCode)
-	}
-
-	var geminiResp GeminiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
-		return models.ShoppingList{}, fmt.Errorf("failed to decode Gemini API response: %w", err)
-	}
-
-	if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
-		return models.ShoppingList{}, fmt.Errorf("invalid or empty response from Gemini API")
-	}
-
-	responseText := geminiResp.Candidates[0].Content.Parts[0].Text
-
-	var shoppingList models.ShoppingList
-	if err := json.Unmarshal([]byte(responseText), &shoppingList); err != nil {
-		return models.ShoppingList{}, fmt.Errorf("failed to parse shopping list JSON from response text: %w", err)
-	}
-
-	return shoppingList, nil
+	return models.ShoppingList{}, fmt.Errorf("failed to parse after %d retries: %w", maxRetries, lastErr)
 }
