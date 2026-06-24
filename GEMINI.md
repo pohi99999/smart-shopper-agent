@@ -122,3 +122,8 @@ A 18. fázis fejlesztései során növeltük a backend biztonságát, legenerál
   - A mobilalkalmazásba integrálásra került a `@react-native-async-storage/async-storage` csomag.
   - A sikeres útvonaltervezés eredményét (útvonalterv és becsült végösszeg) az alkalmazás lokálisan elmenti.
   - A betöltés során az app ellenőrzi az elmentett utolsó bevásárlólistát, és megjeleníti azt az új keresésig, biztosítva az adatok elérését offline környezetben (pl. boltban megszakadó mobilnet esetén) is.
+
+## 19. Fázis: Release Candidate 1 (RC1) és Android Build Előkészítés
+A 19. fázis során rögzítésre került a Release Candidate 1 (RC1) állapot, amellyel a projekt elérte az első stabil, biztonságos és offline is működő mérföldkövét.
+- **Release Candidate 1:** Az alkalmazás Go backend és React Native mobil frontend komponensei stabilan integrálva vannak, lefedve a tesztekkel, a biztonsági és sebességkorlátozásokkal, valamint az offline gyorsítótárazással.
+- **Fizikai Build Előkészítés:** A mobilalkalmazás készen áll az EAS (Expo Application Services) segítségével történő natív Android (.apk) build elkészítésére a mobil eszközökön való éles/előnézeti teszteléshez.
