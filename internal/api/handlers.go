@@ -171,7 +171,8 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 
 		adminToken := os.Getenv("ADMIN_TOKEN")
 		if adminToken == "" {
-			adminToken = "n8n-price-update-token-999"
+			SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
+			return
 		}
 
 		token := r.Header.Get("X-Admin-Token")
