@@ -8,8 +8,6 @@ import (
 	"os"
 	"smart-shopper-agent/internal/models"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 const ParserSystemPrompt = "You are a shopping assistant parser that extracts shopping items and quantities from natural language user input."
@@ -17,7 +15,6 @@ const ParserSystemPrompt = "You are a shopping assistant parser that extracts sh
 type Parser struct{}
 
 func NewParser() *Parser {
-	_ = godotenv.Load()
 	return &Parser{}
 }
 
