@@ -134,13 +134,21 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if r.Method == http.MethodGet {
-		token := r.Header.Get("X-Admin-Token")
-		if token != "secret-admin-token-123" {
-			SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+	_ = godotenv.Load()
+	_ = godotenv.Load("../../.env")
 
+	adminToken := os.Getenv("ADMIN_TOKEN")
+	if adminToken == "" {
+		adminToken = "n8n-price-update-token-999"
+	}
+
+	token := r.Header.Get("X-Admin-Token")
+	if token != adminToken {
+		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if r.Method == http.MethodGet {
 		// This is a stub implementation. In a real application, you would
 		// fetch the prices from a database or memory.
 		prices := map[string]interface{}{
@@ -166,20 +174,6 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method == http.MethodPost {
-		_ = godotenv.Load()
-		_ = godotenv.Load("../../.env")
-
-		adminToken := os.Getenv("ADMIN_TOKEN")
-		if adminToken == "" {
-			adminToken = "n8n-price-update-token-999"
-		}
-
-		token := r.Header.Get("X-Admin-Token")
-		if token != adminToken {
-			SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			SendJSONError(w, "Failed to read request body", http.StatusBadRequest)

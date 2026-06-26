@@ -48,7 +48,7 @@ func TestAdminPricesHandler(t *testing.T) {
 
 	t.Run("Valid Token", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
-		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
+		req.Header.Set("X-Admin-Token", "n8n-price-update-token-999")
 		rec := httptest.NewRecorder()
 
 		handler.AdminPricesHandler(rec, req)
@@ -69,7 +69,7 @@ func TestAdminPricesHandler(t *testing.T) {
 
 	t.Run("Invalid Method", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/admin/prices", nil)
-		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
+		req.Header.Set("X-Admin-Token", "n8n-price-update-token-999")
 		rec := httptest.NewRecorder()
 
 		handler.AdminPricesHandler(rec, req)
