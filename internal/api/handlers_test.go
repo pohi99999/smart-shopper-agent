@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -256,5 +257,48 @@ func TestOptimizeHandler_ParserError(t *testing.T) {
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Errorf("Expected 500 Internal Server Error, got %d", rec.Code)
+	}
+}
+
+func BenchmarkAdminPricesHandler(b *testing.B) {
+
+	// We must ensure the benchmark doesn't overwrite real data
+	filePath := "../../internal/data/prices.json"
+	if _, err := os.Stat(filePath); err != nil {
+		filePath = "internal/data/prices.json"
+	}
+
+	originalData, err := os.ReadFile(filePath)
+	if err == nil {
+		defer os.WriteFile(filePath, originalData, 0644)
+	}
+	handler := NewAPIHandler(nil, nil, nil)
+
+	originalToken := os.Getenv("ADMIN_TOKEN")
+	os.Setenv("ADMIN_TOKEN", "test-token-123")
+	defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+	newPrices := map[string]interface{}{
+		"TestShop": map[string]interface{}{
+			"coordinates": map[string]float64{
+				"latitude":  47.1234,
+				"longitude": 17.5678,
+			},
+			"prices": map[string]float64{
+				"tej": 250,
+			},
+		},
+	}
+	newJSON, _ := json.Marshal(newPrices)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", bytes.NewBuffer(newJSON))
+	req.Header.Set("X-Admin-Token", "test-token-123")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// Re-create buffer because the body is consumed
+		req.Body = io.NopCloser(bytes.NewBuffer(newJSON))
+		rec := httptest.NewRecorder()
+		handler.AdminPricesHandler(rec, req)
 	}
 }
