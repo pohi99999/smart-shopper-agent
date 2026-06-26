@@ -23,40 +23,30 @@ type ShopData struct {
 	Prices      map[string]float64 `json:"prices"`
 }
 
-type PriceScraper struct{}
+type PriceScraper struct {
+	shops map[string]ShopData
+}
 
 func NewPriceScraper() *PriceScraper {
-	return &PriceScraper{}
+	ps := &PriceScraper{
+		shops: make(map[string]ShopData),
+	}
+
+	// Olvassuk be a JSON fájlt egyszer, inicializáláskor
+	data, err := os.ReadFile("internal/data/prices.json")
+	if err == nil {
+		// Ha nincs hiba, próbáljuk meg parse-olni
+		_ = json.Unmarshal(data, &ps.shops)
+	}
+
+	return ps
 }
 
 func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
-	// Olvassuk be a JSON fájlt a megadott helyről
-	data, err := os.ReadFile("internal/data/prices.json")
-	if err != nil {
-		// Ha hiba van a beolvasáskor (pl. nincs fájl), alapértelmezett árral térünk vissza
-		return PriceResponse{
-			ProductName: req.ProductName,
-			ShopChain:   req.ShopChain,
-			Price:       299.0,
-			Available:   true,
-		}, nil
-	}
-
-	var shops map[string]ShopData
-	if err := json.Unmarshal(data, &shops); err != nil {
-		// Ha nem sikerült parse-olni, szintén alapértelmezett ár
-		return PriceResponse{
-			ProductName: req.ProductName,
-			ShopChain:   req.ShopChain,
-			Price:       299.0,
-			Available:   true,
-		}, nil
-	}
-
 	price := 299.0
 	available := false
 
-	if shopData, exists := shops[req.ShopChain]; exists {
+	if shopData, exists := ps.shops[req.ShopChain]; exists {
 		if p, found := shopData.Prices[req.ProductName]; found {
 			price = p
 			available = true
@@ -78,17 +68,7 @@ func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
 }
 
 func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error) {
-	data, err := os.ReadFile("internal/data/prices.json")
-	if err != nil {
-		return Coordinates{}, err
-	}
-
-	var shops map[string]ShopData
-	if err := json.Unmarshal(data, &shops); err != nil {
-		return Coordinates{}, err
-	}
-
-	shopData, exists := shops[shopChain]
+	shopData, exists := ps.shops[shopChain]
 	if !exists {
 		return Coordinates{}, fmt.Errorf("shop chain %s not found in database", shopChain)
 	}
