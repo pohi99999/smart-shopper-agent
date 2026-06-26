@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -67,11 +68,15 @@ func RateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // SecurityHeadersMiddleware adds basic security HTTP headers to responses
 func SecurityHeadersMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+		if allowedOrigin == "" {
+			allowedOrigin = "*"
+		}
+		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Admin-Token")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		
+
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
