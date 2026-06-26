@@ -56,13 +56,7 @@ type GeminiResponse struct {
 func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" || apiKey == "your_api_key_here" {
-		// Mock response if API key is not available
-		return models.ShoppingList{
-			Items: []models.ShoppingItem{
-				{Name: "tojás", Quantity: 10},
-				{Name: "kenyér", Quantity: 1},
-			},
-		}, nil
+		return models.ShoppingList{}, fmt.Errorf("GEMINI_API_KEY is not set or invalid")
 	}
 
 	reqBody := GeminiRequest{
