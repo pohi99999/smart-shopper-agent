@@ -10,6 +10,7 @@ import (
 	"smart-shopper-agent/internal/mcp"
 
 	_ "smart-shopper-agent/docs"
+	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -24,6 +25,10 @@ func main() {
 	slog.SetDefault(logger)
 
 	slog.Info("Smart Shopper Agent API server is starting...")
+
+	if err := godotenv.Load(); err != nil {
+		slog.Warn("No .env file found or error loading it", "error", err)
+	}
 
 	// 1. Initialize MCP tools
 	scraper := mcp.NewPriceScraper()

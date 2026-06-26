@@ -8,8 +8,6 @@ import (
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
-
-	"github.com/joho/godotenv"
 )
 
 type APIHandler struct {
@@ -166,9 +164,6 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method == http.MethodPost {
-		_ = godotenv.Load()
-		_ = godotenv.Load("../../.env")
-
 		adminToken := os.Getenv("ADMIN_TOKEN")
 		if adminToken == "" {
 			adminToken = "n8n-price-update-token-999"
