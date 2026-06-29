@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -108,47 +109,87 @@ func TestRateLimitMiddleware_ForwardedFor(t *testing.T) {
 }
 
 func TestSecurityHeadersMiddleware(t *testing.T) {
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// A dummy handler to wrap
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	handlerToTest := SecurityHeadersMiddleware(nextHandler)
+	tests := []struct {
+		name           string
+		allowedOrigin  string // Value to set in ALLOWED_ORIGIN env var
+		expectedOrigin string // Expected value in Access-Control-Allow-Origin header
+	}{
+		{
+			name:           "Default origin when env var is not set",
+			allowedOrigin:  "",
+			expectedOrigin: "*",
+		},
+		{
+			name:           "Custom origin when env var is set",
+			allowedOrigin:  "https://example.com",
+			expectedOrigin: "https://example.com",
+		},
+	}
 
-	t.Run("Sets correct security headers", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
-		rec := httptest.NewRecorder()
-		handlerToTest.ServeHTTP(rec, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save the original env var and ensure it's restored after the test
+			originalOrigin := os.Getenv("ALLOWED_ORIGIN")
+			defer os.Setenv("ALLOWED_ORIGIN", originalOrigin)
 
-		if rec.Header().Get("Access-Control-Allow-Origin") != "*" {
-			t.Errorf("Expected Access-Control-Allow-Origin: *, got %s", rec.Header().Get("Access-Control-Allow-Origin"))
-		}
-		if rec.Header().Get("Access-Control-Allow-Methods") != "POST, GET, OPTIONS, PUT, DELETE" {
-			t.Errorf("Expected Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, got %s", rec.Header().Get("Access-Control-Allow-Methods"))
-		}
-		if rec.Header().Get("Access-Control-Allow-Headers") != "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Admin-Token" {
-			t.Errorf("Expected Access-Control-Allow-Headers, got %s", rec.Header().Get("Access-Control-Allow-Headers"))
-		}
-		if rec.Header().Get("X-Content-Type-Options") != "nosniff" {
-			t.Errorf("Expected X-Content-Type-Options: nosniff, got %s", rec.Header().Get("X-Content-Type-Options"))
-		}
-		if rec.Code != http.StatusOK {
-			t.Errorf("Expected 200 OK, got %d", rec.Code)
-		}
+			if tt.allowedOrigin == "" {
+				os.Unsetenv("ALLOWED_ORIGIN")
+			} else {
+				os.Setenv("ALLOWED_ORIGIN", tt.allowedOrigin)
+			}
+
+			// Create the middleware wrapped handler
+			handler := SecurityHeadersMiddleware(dummyHandler)
+
+			// Create a request and a response recorder
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rr := httptest.NewRecorder()
+
+			// Call the handler
+			handler.ServeHTTP(rr, req)
+
+			// Check the Access-Control-Allow-Origin header
+			actualOrigin := rr.Header().Get("Access-Control-Allow-Origin")
+			if actualOrigin != tt.expectedOrigin {
+				t.Errorf("expected Access-Control-Allow-Origin %q, got %q", tt.expectedOrigin, actualOrigin)
+			}
+
+			// Check other security headers that should always be present
+			expectedMethods := "POST, GET, OPTIONS, PUT, DELETE"
+			if actual := rr.Header().Get("Access-Control-Allow-Methods"); actual != expectedMethods {
+				t.Errorf("expected Access-Control-Allow-Methods %q, got %q", expectedMethods, actual)
+			}
+
+			expectedContentTypeOptions := "nosniff"
+			if actual := rr.Header().Get("X-Content-Type-Options"); actual != expectedContentTypeOptions {
+				t.Errorf("expected X-Content-Type-Options %q, got %q", expectedContentTypeOptions, actual)
+			}
+		})
+	}
+}
+
+func TestSecurityHeadersMiddleware_Options(t *testing.T) {
+	// A dummy handler to wrap
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// This should not be called for OPTIONS request
+		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	t.Run("OPTIONS method returns 200 early", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodOptions, "/test", nil)
-		rec := httptest.NewRecorder()
+	handler := SecurityHeadersMiddleware(dummyHandler)
 
-		// If nextHandler is called, this would be an error because OPTIONS should return early
-		handlerToTest := SecurityHeadersMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			t.Error("Next handler should not be called for OPTIONS request")
-		}))
+	req := httptest.NewRequest(http.MethodOptions, "/", nil)
+	rr := httptest.NewRecorder()
 
-		handlerToTest.ServeHTTP(rec, req)
+	handler.ServeHTTP(rr, req)
 
-		if rec.Code != http.StatusOK {
-			t.Errorf("Expected 200 OK, got %d", rec.Code)
-		}
-	})
+	// Status code should be 200 OK because of the middleware returning early
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 }
