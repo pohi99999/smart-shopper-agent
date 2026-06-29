@@ -127,3 +127,9 @@ A 18. fázis fejlesztései során növeltük a backend biztonságát, legenerál
 A 19. fázis során rögzítésre került a Release Candidate 1 (RC1) állapot, amellyel a projekt elérte az első stabil, biztonságos és offline is működő mérföldkövét.
 - **Release Candidate 1:** Az alkalmazás Go backend és React Native mobil frontend komponensei stabilan integrálva vannak, lefedve a tesztekkel, a biztonsági és sebességkorlátozásokkal, valamint az offline gyorsítótárazással.
 - **Fizikai Build Előkészítés:** A mobilalkalmazás készen áll az EAS (Expo Application Services) segítségével történő natív Android (.apk) build elkészítésére a mobil eszközökön való éles/előnézeti teszteléshez.
+
+## 20. Fázis: Jules újabb tesztjeinek és javításainak szinkronizációja
+A 20. fázis során sikeresen szinkronizálásra és integrálásra kerültek a main ágba Jules legújabb biztonsági és kód-egészségügyi fejlesztései.
+- **CORS Biztonsági Javítás:** Az overly permissive CORS beállítások helyett bevezetésre került az `ALLOWED_ORIGIN` környezeti változó támogatása a [middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) fájlban, ami alapértelmezetten a biztonságos '*' értéket kapja, de konfigurálható egyedi domainekre is.
+- **Middleware Tesztek:** Elkészültek és beolvasztásra kerültek az új API middleware tesztek az [middleware_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_test.go) fájlban, lefedve a CORS origin beállításokat és a rate limitinget (X-Forwarded-For és RemoteAddr alapú limitekkel).
+- **Backend Integráció:** A helyi `main` ágon sikeresen feloldásra kerültek a teszt fájlokban lévő merge konfliktusok, a backend tesztek (`go test -short ./... -v`) pedig hibátlanul lefutottak az összesített környezetben. A változtatások feltöltésre kerültek a GitHub-ra.
