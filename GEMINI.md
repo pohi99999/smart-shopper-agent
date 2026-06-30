@@ -50,6 +50,8 @@ Az **1-11. fázis** sikeresen elkészült:
 
 ## 4. Következő feladatok
 - Valós web-scraperek bekötése a JSON adatbázis frissítéséhez vagy a valós idejű árlekérdezéshez.
+- Web, App Store és Play Store megjelenés előkészítése (22. Fázis+).
+- Hirdetési (Ads) és Pro előfizetéses (In-App Purchases) üzleti modell implementálása.
 
 ## 12. Fázis: n8n Ingest API
 A 12. fázis fejlesztései (n8n Ingest API) sikeresen megtervezésre, implementálásra, tesztelésre és beolvasztásra kerültek a `main` ágba.
@@ -133,3 +135,40 @@ A 20. fázis során sikeresen szinkronizálásra és integrálásra kerültek a 
 - **CORS Biztonsági Javítás:** Az overly permissive CORS beállítások helyett bevezetésre került az `ALLOWED_ORIGIN` környezeti változó támogatása a [middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) fájlban, ami alapértelmezetten a biztonságos '*' értéket kapja, de konfigurálható egyedi domainekre is.
 - **Middleware Tesztek:** Elkészültek és beolvasztásra kerültek az új API middleware tesztek az [middleware_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_test.go) fájlban, lefedve a CORS origin beállításokat és a rate limitinget (X-Forwarded-For és RemoteAddr alapú limitekkel).
 - **Backend Integráció:** A helyi `main` ágon sikeresen feloldásra kerültek a teszt fájlokban lévő merge konfliktusok, a backend tesztek (`go test -short ./... -v`) pedig hibátlanul lefutottak az összesített környezetben. A változtatások feltöltésre kerültek a GitHub-ra.
+
+## 21. Fázis: Copilot Integráció és Cross-Platform Vízió
+
+A 21. fázis során rögzítésre kerültek a projekt hosszú távú platformfüggetlen és üzleti stratégiájának alapjai.
+
+### Elvégzett feladatok
+- **GitHub Copilot Instrukciók:** Létrejött a [.github/copilot-instructions.md](file:///Z:/001_Workspace/smart-shopper-agent/.github/copilot-instructions.md) fájl, amely rögzíti a projekt összes kódolási szabályát:
+  - Backend: Go 1.26+, `log/slog` strukturált logolás, 70%+ teszt lefedettség, retry logika, timeoutok, clean architecture.
+  - Frontend: Expo SDK 56, TypeScript strict, platformfüggetlen (Web/iOS/Android) UI komponensek kötelező támogatással.
+  - Általános: Conventional Commits, CI/CD pipeline szabályok, Docker és n8n konvenciók.
+- **Cross-Platform Web Támogatás:** A [mobile/app.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/app.json) fájlban bekapcsolásra került a Metro web bundler (`"web": { "bundler": "metro" }`).
+- **Web Függőségek:** Telepítésre kerültek a webes Expo futtatáshoz szükséges npm csomagok a `mobile` projektbe:
+  - `react-dom` – React DOM renderer webes megjelenítéshez.
+  - `react-native-web` – React Native API-k webes implementációja.
+  - `@expo/metro-runtime` – Metro bundler web runtime.
+
+### Jövőbeli üzleti vízió (22. Fázis+)
+A projekt célja a **Web / App Store (iOS) / Play Store (Android)** platformokon való megjelenés az alábbi üzleti modellel:
+
+#### Ingyenes Tier (Ad-Supported)
+- Az alkalmazás teljes funkcionalitása elérhető, de hirdetések jelennek meg (banner a képernyő alján).
+- Hirdetési integráció: `expo-ads-admob` (vagy platform-natív ekvivalens), `<AdBanner>` komponens.
+- A hirdetésbevétel fedezi az infrastruktúra és az AI API (Gemini) költségeit.
+
+#### Pro Tier (Subscription / In-App Purchase)
+- **Hirdetésmentes** élmény.
+- **Kiterjesztett boltlista**: extra láncokon (pl. Lidl, Spar, Tesco) túlmutató ár-összehasonlítás.
+- **Előzmények és kedvencek**: bevásárlólisták mentése és visszatöltése AsyncStorage + backend sync-kel.
+- **Push értesítések**: ár-riasztások, ha egy termék árcsökkentést ér el.
+- Fizetési integráció: `expo-in-app-purchases` (iOS) / `react-native-iap` (Android/Web), absztrahálva egy `usePurchase` hook mögé.
+- Feature flag kezelés: `useProStatus` hook (AsyncStorage + backend validáció).
+
+#### Technikai irányelvek a monetizációhoz
+- Minden Pro-gated funkció mögé `useProStatus` ellenőrzés kerül; ingyenes felhasználóknál paywall modal jelenik meg.
+- Az `<AdBanner>` komponens Pro felhasználóknak `null`-t renderel.
+- A backend `/api/v1/user/subscription` végponton validálhatja az előfizetés státuszát (JWT alapú auth, 22. Fázistól).
+

@@ -1,0 +1,58 @@
+================================================================================
+SMART SHOPPER AGENT – STATUS LOG
+================================================================================
+
+[2026-06-30] Fázis 21: Copilot Integráció és Cross-Platform Vízió
+--------------------------------------------------------------------------------
+Elvégzett lépések:
+
+1. PROJEKT ÁTTEKINTÉS
+   - Beolvasásra kerültek: GEMINI.md (1-20. fázis kontextus), mobile/app.json,
+     mobile/package.json, .github/workflows/backend-ci.yml.
+   - Megállapítás: a web bundler és a webes csomagok hiányoztak; 
+     copilot-instructions.md még nem létezett.
+
+2. COPILOT INSTRUKCIÓK GENERÁLÁSA
+   - Létrejött: .github/copilot-instructions.md
+   - Tartalom: Go 1.26+ backend szabályok (slog, retry, timeout, clean arch,
+     Swagger, tesztelés), Expo 56 frontend szabályok (TypeScript strict, 
+     cross-platform, offline cache, monetizáció tervezése), általános Git/CI/
+     Docker/n8n konvenciók.
+
+3. CROSS-PLATFORM FELKÉSZÍTÉS
+   - mobile/app.json: hozzáadva "bundler": "metro" a "web" szekcióba.
+   - Telepített csomagok (--legacy-peer-deps):
+       react-dom            → ^19.2.3
+       react-native-web     → ^0.21.2
+       @expo/metro-runtime  → ~56.0.15
+   - Az alkalmazás mostantól `npx expo start --web` paranccsal indítható böngészőben.
+
+4. ARCHITEKTÚRA ÉS VÍZIÓ FRISSÍTÉSE
+   - GEMINI.md frissítve: 21. Fázis hozzáadva.
+   - Rögzítve: Web/App Store/Play Store megjelenési cél.
+   - Rögzítve: Ad-Supported (ingyenes) és Pro Subscription üzleti modell terve.
+   - Technikai irányelvek: AdBanner komponens, usePurchase hook, useProStatus hook.
+
+5. GIT SZINKRONIZÁCIÓ
+   - Commit: chore: Initialize Copilot context and setup cross-platform web support
+   - Branch: main
+   - Remote: https://github.com/pohi99999/smart-shopper-agent.git
+
+6. NAPLÓ FRISSÍTÉS
+   - Létrejött: status.log (ez a fájl)
+
+================================================================================
+Korábbi fázisok összefoglalója (1-20.)
+================================================================================
+01-11  Alap architektúra, MCP eszközök, OSRM, Gemini API, REST szerver,
+       React Native frontend, GPS, zalaegerszegi adatok, térképes vizualizáció.
+12     n8n Ingest API (POST /api/v1/admin/prices, X-Admin-Token auth).
+13     Jules aszinkron tesztelés: hibakezelés, timeout, távolságkorlát, tesztek.
+14     n8n Automatizációs Blueprint (cron, mock scraper, data transform, ingest).
+15     Docker konténerizáció (multi-stage Dockerfile, docker-compose.yml).
+16     (nem dokumentált külön fázisként)
+17     CI/CD pipeline, frontend tesztek, slog strukturált logolás.
+18     Swagger/OpenAPI, Rate Limiter middleware, retry logika, offline cache.
+19     Release Candidate 1, Android EAS build előkészítés.
+20     CORS javítás (ALLOWED_ORIGIN env var), middleware tesztek, merge sync.
+================================================================================
