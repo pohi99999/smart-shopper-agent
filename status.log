@@ -2,6 +2,35 @@
 SMART SHOPPER AGENT – STATUS LOG
 ================================================================================
 
+[2026-06-30] Fázis 23: n8n API Deployment és Integrációs Tesztelés
+--------------------------------------------------------------------------------
+Elvégzett lépések:
+
+1. N8N DEPLOYMENT SZKRIPT
+   - Létrehozva: scripts/deploy_n8n_workflow.js
+   - Nulla külső függőség (Node.js built-in: fs, path, http, https).
+   - Beolvassa: N8N_API_KEY, N8N_HOST a .env-ből (saját parser).
+   - Létrehozza a workflow-t: POST {N8N_HOST}/api/v1/workflows
+   - Aktiválja: POST {N8N_HOST}/api/v1/workflows/{id}/activate
+   - Strukturált konzol-output, hibakezeléssel.
+
+2. WEBHOOK SZIMULÁCIÓS TESZT
+   - Létrehozva: scripts/simulate_webhook.js
+   - Nulla külső függőség, 8s timeout.
+   - POST http://localhost:8080/api/v1/admin/prices tesztárakkal.
+   - VALIDÁLVA: HTTP 200 OK kapott
+     Body: {"message":"Prices updated successfully","status":"success"}
+   - prices.json visszaállítva: git checkout -- internal/data/prices.json
+     (Ellenőrzés: tojás visszaállt 450.0 Ft-ra ✅)
+
+3. DOKUMENTÁCIÓ
+   - GEMINI.md frissítve: 23. Fázis hozzáadva.
+
+4. GIT SZINKRONIZÁCIÓ
+   - Commit: feat: Add n8n API deployment script and simulate webhook integration
+   - Branch: main
+   - Remote: https://github.com/pohi99999/smart-shopper-agent.git
+
 [2026-06-30] Fázis 22: Előfizetési Architektúra és Paywall UI
 --------------------------------------------------------------------------------
 Elvégzett lépések:

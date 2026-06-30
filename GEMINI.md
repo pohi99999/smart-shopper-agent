@@ -210,3 +210,39 @@ A 22. fázis során megvalósításra került a RevenueCat integrációt előké
 
 ### Tesztelés
 - Összes meglévő teszt (`npm test`) hibátlanul fut: **4/4 PASS**.
+
+## 23. Fázis: n8n API Deployment és Integrációs Tesztelés (2026-06-30)
+
+A 23. fázis során megvalósításra kerültek az n8n automatizációt élesítő deployment szkriptek, valamint végrehajtásra és validálásra került a backend webhook integrációs teszt.
+
+### n8n API Deployment Szkript
+- Létrejött a [scripts/deploy_n8n_workflow.js](file:///Z:/001_Workspace/smart-shopper-agent/scripts/deploy_n8n_workflow.js) fájl.
+- **Működés:**
+  1. Beolvassa az `N8N_API_KEY` és `N8N_HOST` (fallback: `http://localhost:5678`) értékeket a `.env` fájlból (saját, függőségmentes `.env` parser).
+  2. Beolvassa az `internal/automation/n8n_price_updater_workflow.json` workflow definíciót.
+  3. `POST /api/v1/workflows` kéréssel létrehozza a munkafolyamatot az n8n REST API-n (`X-N8N-API-Key` fejléccel).
+  4. `POST /api/v1/workflows/{id}/activate` kéréssel aktiválja a workflow-t.
+  5. Strukturált konzol-kimenettel jelzi a sikerességet vagy a hibát (pl. elérhetetlen n8n, hiányzó API kulcs, HTTP hibakód).
+- **Futtatás:** `node scripts/deploy_n8n_workflow.js`
+
+### Webhook Szimulációs Teszt
+- Létrejött a [scripts/simulate_webhook.js](file:///Z:/001_Workspace/smart-shopper-agent/scripts/simulate_webhook.js) fájl.
+- **Működés:**
+  1. Beolvassa az `ADMIN_TOKEN` és `BACKEND_HOST` (fallback: `http://localhost:8080`) értékeket a `.env` fájlból.
+  2. `POST http://localhost:8080/api/v1/admin/prices` kérést küld szándékosan eltérő tesztárakkal (tojás: 99 Ft, kenyér: 199 Ft, tej: 149 Ft).
+  3. Validálja a HTTP 200 OK választ.
+  4. Kiírja az aktualizált `prices.json` tartalmát.
+- **Futtatás és validálás eredménye (2026-06-30):**
+  ```
+  📬  Response: HTTP 200
+  ✅  SUCCESS – Backend accepted the price update (HTTP 200 OK)
+     Response body: {"message":"Prices updated successfully","status":"success"}
+  ```
+- A teszt után az eredeti adatbázis visszaállításra került: `git checkout -- internal/data/prices.json`
+- **Futtatás:** `node scripts/simulate_webhook.js`
+
+### Technikai részletek
+- Mindkét szkript **nulla külső npm függőséggel** működik (csak Node.js beépített modulok: `fs`, `path`, `http`, `https`).
+- A `.env` parser kezeli az inline kommenteket, idézőjelet és a `******` maszkolt értékeket.
+- A `simulate_webhook.js` 8 másodperces request timeout-tal rendelkezik, és értelmes hibaüzenetet ad vissza, ha a backend nem elérhető.
+
