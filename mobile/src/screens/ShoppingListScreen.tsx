@@ -14,13 +14,20 @@ import {
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useShoppingOptimizer } from '../hooks/useShoppingOptimizer';
+import { useSubscription } from '../context/SubscriptionContext';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Props {
+  onShowPaywall?: () => void;
+}
 
 const SHOP_COORDINATES: { [key: string]: { latitude: number; longitude: number } } = {
   'Aldi': { latitude: 46.8451, longitude: 16.8455 },
   'Interspar': { latitude: 46.8413, longitude: 16.8521 },
 };
 
-export default function ShoppingListScreen() {
+export default function ShoppingListScreen({ onShowPaywall }: Props) {
   const {
     inputText,
     setInputText,
@@ -29,6 +36,8 @@ export default function ShoppingListScreen() {
     coords,
     handleOptimize,
   } = useShoppingOptimizer();
+
+  const { isPro } = useSubscription();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,8 +48,24 @@ export default function ShoppingListScreen() {
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Smart Shopper</Text>
-            <Text style={styles.subtitle}>Személyes bevásárló asszisztens</Text>
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.title}>Smart Shopper</Text>
+                <Text style={styles.subtitle}>Személyes bevásárló asszisztens</Text>
+              </View>
+              {!isPro && onShowPaywall && (
+                <TouchableOpacity
+                  style={styles.proButton}
+                  onPress={onShowPaywall}
+                  activeOpacity={0.8}
+                  accessibilityLabel="Smart Shopper Pro megnyitása"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.proButtonIcon}>👑</Text>
+                  <Text style={styles.proButtonText}>Go Pro</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* Input Section */}
@@ -161,6 +186,34 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
     marginTop: 10,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  proButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5A623',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    shadowColor: '#F5A623',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  proButtonIcon: {
+    fontSize: 14,
+    marginRight: 5,
+  },
+  proButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   title: {
     fontSize: 34,

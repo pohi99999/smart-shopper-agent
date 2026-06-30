@@ -2,6 +2,53 @@
 SMART SHOPPER AGENT – STATUS LOG
 ================================================================================
 
+[2026-06-30] Fázis 22: Előfizetési Architektúra és Paywall UI
+--------------------------------------------------------------------------------
+Elvégzett lépések:
+
+1. BIZTONSÁGI AUDIT ÉS JAVÍTÁS
+   - npm audit fix --legacy-peer-deps futtatva a mobile/ könyvtárban.
+   - Javítva: js-yaml <3.15.0 (GHSA-h67p-54hq-rp68). 11 → 10 figyelmeztetés.
+   - Nem javítható: uuid <11.1.1 Expo 56 build toolchain mélyén (xcode →
+     @expo/config-plugins). A --force downgrade expo@46-ra → elfogadhatatlan.
+     Ismert false positive, production bundle-t nem érinti.
+
+2. SUBSCRIPTION SERVICE ABSTRACTION
+   - Létrehozva: mobile/src/services/subscriptionService.ts
+   - Interfészek: SubscriptionStatus, ProductId, PRODUCT_IDS
+   - Függvények: fetchSubscriptionStatus(), purchaseSubscription(), restorePurchases()
+   - Mock implementáció; RevenueCat integrációra felkészített TODO kommentekkel.
+
+3. SUBSCRIPTION CONTEXT
+   - Létrehozva: mobile/src/context/SubscriptionContext.tsx
+   - SubscriptionProvider bevonja az egész App-ot (App.tsx frissítve).
+   - useSubscription() hook: isPro, isLoading, error, subscribe(), restore(), refresh()
+   - useMemo + useCallback optimalizálással.
+
+4. PAYWALL SCREEN
+   - Létrehozva: mobile/src/screens/PaywallScreen.tsx
+   - Apple-style arany dizájn, 👑 hero, 6 feature kártya, havi/éves ár.
+   - Arany CTA gomb, Restore, Legal szöveg.
+   - Platformfüggetlen (Web/iOS/Android), Platform.OS guardok.
+   - Modal-ban jelenik meg (animationType: slide, presentationStyle: pageSheet).
+
+5. INTEGRÁCIÓ – ShoppingListScreen + App.tsx
+   - ShoppingListScreen kiegészült: Props interfész, onShowPaywall prop.
+   - Fejlécben 👑 Go Pro gomb (csak ha !isPro).
+   - App.tsx: SubscriptionProvider wrap, Modal state, PaywallScreen modal.
+
+6. TYPESCRIPT FIX
+   - mobile/tsconfig.json: "types": ["jest", "@types/jest"] hozzáadva.
+   - Korábbi "Cannot find name 'jest'" hibák megszüntetve.
+   - npm test: 4/4 PASS (minden meglévő teszt zöld).
+
+7. GIT SZINKRONIZÁCIÓ
+   - Commit: feat: Implement subscription context, premium paywall UI and resolve security vulnerabilities
+   - Branch: main
+   - Remote: https://github.com/pohi99999/smart-shopper-agent.git
+
+================================================================================
+
 [2026-06-30] Fázis 21: Copilot Integráció és Cross-Platform Vízió
 --------------------------------------------------------------------------------
 Elvégzett lépések:
@@ -9,13 +56,13 @@ Elvégzett lépések:
 1. PROJEKT ÁTTEKINTÉS
    - Beolvasásra kerültek: GEMINI.md (1-20. fázis kontextus), mobile/app.json,
      mobile/package.json, .github/workflows/backend-ci.yml.
-   - Megállapítás: a web bundler és a webes csomagok hiányoztak; 
+   - Megállapítás: a web bundler és a webes csomagok hiányoztak;
      copilot-instructions.md még nem létezett.
 
 2. COPILOT INSTRUKCIÓK GENERÁLÁSA
    - Létrejött: .github/copilot-instructions.md
    - Tartalom: Go 1.26+ backend szabályok (slog, retry, timeout, clean arch,
-     Swagger, tesztelés), Expo 56 frontend szabályok (TypeScript strict, 
+     Swagger, tesztelés), Expo 56 frontend szabályok (TypeScript strict,
      cross-platform, offline cache, monetizáció tervezése), általános Git/CI/
      Docker/n8n konvenciók.
 
@@ -35,8 +82,7 @@ Elvégzett lépések:
 
 5. GIT SZINKRONIZÁCIÓ
    - Commit: chore: Initialize Copilot context and setup cross-platform web support
-   - Branch: main
-   - Remote: https://github.com/pohi99999/smart-shopper-agent.git
+   - Branch: main → f52332b
 
 6. NAPLÓ FRISSÍTÉS
    - Létrejött: status.log (ez a fájl)

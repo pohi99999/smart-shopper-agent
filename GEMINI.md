@@ -172,3 +172,41 @@ A projekt célja a **Web / App Store (iOS) / Play Store (Android)** platformokon
 - Az `<AdBanner>` komponens Pro felhasználóknak `null`-t renderel.
 - A backend `/api/v1/user/subscription` végponton validálhatja az előfizetés státuszát (JWT alapú auth, 22. Fázistól).
 
+## 22. Fázis: Előfizetési Architektúra és Paywall UI (2026-06-30)
+
+A 22. fázis során megvalósításra került a RevenueCat integrációt előkészítő prémium előfizetéses architektúra, a modern Paywall értékesítési felület, valamint a biztonsági figyelmeztetések javítása.
+
+### Biztonsági Audit és Javítás
+- **`npm audit fix`** futtatásra került a `mobile` könyvtárban (`--legacy-peer-deps` flaggel).
+- **Javított:** `js-yaml < 3.15.0` (GHSA-h67p-54hq-rp68) – sebezhető verzió frissítve. Figyelmeztetések: 11 → 10.
+- **Nem javítható destruktív változás nélkül:** `uuid < 11.1.1` (GHSA-w5hq-g745-h8pq) – az Expo 56 build toolchain mélyén (`xcode` → `@expo/config-plugins`) van jelen. A `npm audit fix --force` expo@46-ra downgradelne, ami elfogadhatatlan. Ez ismert false positive az Expo ökoszisztémában; csak az EAS/prebuild folyamat során érintett, a production bundle-ben nem jelenik meg.
+
+### Előfizetési Szolgáltatási Réteg
+- Létrejött a [mobile/src/services/subscriptionService.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/subscriptionService.ts) fájl.
+- Definiálva: `SubscriptionStatus` interfész (`isPro`, `expiresAt`, `productId`), `PRODUCT_IDS` konstansok.
+- Implementálva: `fetchSubscriptionStatus()`, `purchaseSubscription()`, `restorePurchases()` – jelenleg mock implementációval, 23. Fázisban cserélhető RevenueCat SDK hívásokra.
+
+### Globális Állapotkezelés (Subscription Context)
+- Létrejött a [mobile/src/context/SubscriptionContext.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/context/SubscriptionContext.tsx) fájl.
+- `SubscriptionProvider` komponens becsomagolja az egész alkalmazást (App.tsx-ben).
+- `useSubscription()` hook biztosítja a globális `isPro`, `isLoading`, `error`, `subscribe()`, `restore()`, `refresh()` elérését.
+- `useMemo` + `useCallback` optimalizálással a felesleges re-renderek elkerülésére.
+
+### Prémium Paywall UI
+- Létrejött a [mobile/src/screens/PaywallScreen.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/PaywallScreen.tsx) fájl.
+- Apple-style arany/premium dizájn: 👑 hero szekció, 6 feature kártya, havi/éves ár-összehasonlítás.
+- Arany `Előfizetés indítása` CTA gomb (mock purchase) és `Korábbi vásárlás visszaállítása` link.
+- Sikeres vásárlás után automata bezárás (800ms delay).
+- Platformfüggetlen: `react-native-maps` és platform-specifikus API-k nélkül, `Platform.OS` guard-okkal.
+- Az App.tsx-ben React Native `Modal` (animationType: slide, presentationStyle: pageSheet) jeleníti meg.
+
+### Integráció és Navigáció
+- A [mobile/src/screens/ShoppingListScreen.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/ShoppingListScreen.tsx) `Props` interfészt kapott (`onShowPaywall?: () => void`).
+- A fejlécben diszkrét arany `👑 Go Pro` gomb jelenik meg, ha `!isPro && onShowPaywall`.
+- Az [App.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.tsx) kezeli a modal láthatóságát, a `SubscriptionProvider` az egész app-ot körbeveszi.
+
+### TypeScript Fix
+- A [mobile/tsconfig.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/tsconfig.json) kiegészült a `"types": ["jest", "@types/jest"]` beállítással, megszüntetve a teszt fájlokban korábban lévő `Cannot find name 'jest'` kompilációs hibákat.
+
+### Tesztelés
+- Összes meglévő teszt (`npm test`) hibátlanul fut: **4/4 PASS**.
