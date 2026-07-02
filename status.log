@@ -1,133 +1,38 @@
-================================================================================
-SMART SHOPPER AGENT – STATUS LOG
-================================================================================
+Dátum: 2026-06-26 10:00
+Bejegyzés: Projekt inicializálva, Next.js alapok lefektetve, Git repo összekötve.
 
-[2026-06-30] Fázis 23: n8n API Deployment és Integrációs Tesztelés
---------------------------------------------------------------------------------
-Elvégzett lépések:
+Dátum: 2026-06-26 10:07
+Bejegyzés: Hero és Bizalmi szekciók (B2B fókusz) lefejlesztve, repó frissítve.
 
-1. N8N DEPLOYMENT SZKRIPT
-   - Létrehozva: scripts/deploy_n8n_workflow.js
-   - Nulla külső függőség (Node.js built-in: fs, path, http, https).
-   - Beolvassa: N8N_API_KEY, N8N_HOST a .env-ből (saját parser).
-   - Létrehozza a workflow-t: POST {N8N_HOST}/api/v1/workflows
-   - Aktiválja: POST {N8N_HOST}/api/v1/workflows/{id}/activate
-   - Strukturált konzol-output, hibakezeléssel.
+Dátum: 2026-06-26 10:16
+Bejegyzés: Járműpark és Ajánlatkérő űrlap vizuális váza elkészült, repó frissítve.
 
-2. WEBHOOK SZIMULÁCIÓS TESZT
-   - Létrehozva: scripts/simulate_webhook.js
-   - Nulla külső függőség, 8s timeout.
-   - POST http://localhost:8080/api/v1/admin/prices tesztárakkal.
-   - VALIDÁLVA: HTTP 200 OK kapott
-     Body: {"message":"Prices updated successfully","status":"success"}
-   - prices.json visszaállítva: git checkout -- internal/data/prices.json
-     (Ellenőrzés: tojás visszaállt 450.0 Ft-ra ✅)
+Dátum: 2026-06-26 10:20
+Bejegyzés: Ajánlatkérő űrlap API és n8n webhook logika implementálva, repó frissítve.
 
-3. DOKUMENTÁCIÓ
-   - GEMINI.md frissítve: 23. Fázis hozzáadva.
+Dátum: 2026-06-26 10:28
+Bejegyzés: GYIK, Lábléc és Lebegő hívásgomb lefejlesztve, a landing page struktúrája teljes.
 
-4. GIT SZINKRONIZÁCIÓ
-   - Commit: feat: Add n8n API deployment script and simulate webhook integration
-   - Branch: main
-   - Remote: https://github.com/pohi99999/smart-shopper-agent.git
+Dátum: 2026-06-26 10:35
+Bejegyzés: n8n workflow automatikusan létrehozva és aktiválva API-n keresztül, webhook URL beállítva a .env.local fájlban.
 
-[2026-06-30] Fázis 22: Előfizetési Architektúra és Paywall UI
---------------------------------------------------------------------------------
-Elvégzett lépések:
+Dátum: 2026-06-29 11:28
+Bejegyzés: CI/CD pipeline aktív: A GitHub main ága szinkronizálva a Vercel produkciós környezettel. Minden jövőbeli push automatikusan élesedik.
 
-1. BIZTONSÁGI AUDIT ÉS JAVÍTÁS
-   - npm audit fix --legacy-peer-deps futtatva a mobile/ könyvtárban.
-   - Javítva: js-yaml <3.15.0 (GHSA-h67p-54hq-rp68). 11 → 10 figyelmeztetés.
-   - Nem javítható: uuid <11.1.1 Expo 56 build toolchain mélyén (xcode →
-     @expo/config-plugins). A --force downgrade expo@46-ra → elfogadhatatlan.
-     Ismert false positive, production bundle-t nem érinti.
+Dátum: 2026-06-29 11:37
+Bejegyzés: Prémium UI elemek és dinamikus blokkok élesítve (dinamikus statisztikák, ügyfélvélemények és választóvonal banner).
 
-2. SUBSCRIPTION SERVICE ABSTRACTION
-   - Létrehozva: mobile/src/services/subscriptionService.ts
-   - Interfészek: SubscriptionStatus, ProductId, PRODUCT_IDS
-   - Függvények: fetchSubscriptionStatus(), purchaseSubscription(), restorePurchases()
-   - Mock implementáció; RevenueCat integrációra felkészített TODO kommentekkel.
+Dátum: 2026-06-29 11:41
+Bejegyzés: Prémium stock fotók integrálva és élesítve a Hero, Banner és Fleet szekciókban, next.config.ts remotePatterns beállítva.
 
-3. SUBSCRIPTION CONTEXT
-   - Létrehozva: mobile/src/context/SubscriptionContext.tsx
-   - SubscriptionProvider bevonja az egész App-ot (App.tsx frissítve).
-   - useSubscription() hook: isPro, isLoading, error, subscribe(), restore(), refresh()
-   - useMemo + useCallback optimalizálással.
+Dátum: 2026-06-29 11:53
+Bejegyzés: SEO és Open Graph metaadatok beállítva és élesítve.
 
-4. PAYWALL SCREEN
-   - Létrehozva: mobile/src/screens/PaywallScreen.tsx
-   - Apple-style arany dizájn, 👑 hero, 6 feature kártya, havi/éves ár.
-   - Arany CTA gomb, Restore, Legal szöveg.
-   - Platformfüggetlen (Web/iOS/Android), Platform.OS guardok.
-   - Modal-ban jelenik meg (animationType: slide, presentationStyle: pageSheet).
+Dátum: 2026-06-29 12:12
+Bejegyzés: Járműpark szekció stock fotója lecserélve a valós (1.jpg) képre.
 
-5. INTEGRÁCIÓ – ShoppingListScreen + App.tsx
-   - ShoppingListScreen kiegészült: Props interfész, onShowPaywall prop.
-   - Fejlécben 👑 Go Pro gomb (csak ha !isPro).
-   - App.tsx: SubscriptionProvider wrap, Modal state, PaywallScreen modal.
+Dátum: 2026-06-29 12:17
+Bejegyzés: Prémium arculati fejléc és egyedi SVG logó lefejlesztve és integrálva.
 
-6. TYPESCRIPT FIX
-   - mobile/tsconfig.json: "types": ["jest", "@types/jest"] hozzáadva.
-   - Korábbi "Cannot find name 'jest'" hibák megszüntetve.
-   - npm test: 4/4 PASS (minden meglévő teszt zöld).
-
-7. GIT SZINKRONIZÁCIÓ
-   - Commit: feat: Implement subscription context, premium paywall UI and resolve security vulnerabilities
-   - Branch: main
-   - Remote: https://github.com/pohi99999/smart-shopper-agent.git
-
-================================================================================
-
-[2026-06-30] Fázis 21: Copilot Integráció és Cross-Platform Vízió
---------------------------------------------------------------------------------
-Elvégzett lépések:
-
-1. PROJEKT ÁTTEKINTÉS
-   - Beolvasásra kerültek: GEMINI.md (1-20. fázis kontextus), mobile/app.json,
-     mobile/package.json, .github/workflows/backend-ci.yml.
-   - Megállapítás: a web bundler és a webes csomagok hiányoztak;
-     copilot-instructions.md még nem létezett.
-
-2. COPILOT INSTRUKCIÓK GENERÁLÁSA
-   - Létrejött: .github/copilot-instructions.md
-   - Tartalom: Go 1.26+ backend szabályok (slog, retry, timeout, clean arch,
-     Swagger, tesztelés), Expo 56 frontend szabályok (TypeScript strict,
-     cross-platform, offline cache, monetizáció tervezése), általános Git/CI/
-     Docker/n8n konvenciók.
-
-3. CROSS-PLATFORM FELKÉSZÍTÉS
-   - mobile/app.json: hozzáadva "bundler": "metro" a "web" szekcióba.
-   - Telepített csomagok (--legacy-peer-deps):
-       react-dom            → ^19.2.3
-       react-native-web     → ^0.21.2
-       @expo/metro-runtime  → ~56.0.15
-   - Az alkalmazás mostantól `npx expo start --web` paranccsal indítható böngészőben.
-
-4. ARCHITEKTÚRA ÉS VÍZIÓ FRISSÍTÉSE
-   - GEMINI.md frissítve: 21. Fázis hozzáadva.
-   - Rögzítve: Web/App Store/Play Store megjelenési cél.
-   - Rögzítve: Ad-Supported (ingyenes) és Pro Subscription üzleti modell terve.
-   - Technikai irányelvek: AdBanner komponens, usePurchase hook, useProStatus hook.
-
-5. GIT SZINKRONIZÁCIÓ
-   - Commit: chore: Initialize Copilot context and setup cross-platform web support
-   - Branch: main → f52332b
-
-6. NAPLÓ FRISSÍTÉS
-   - Létrejött: status.log (ez a fájl)
-
-================================================================================
-Korábbi fázisok összefoglalója (1-20.)
-================================================================================
-01-11  Alap architektúra, MCP eszközök, OSRM, Gemini API, REST szerver,
-       React Native frontend, GPS, zalaegerszegi adatok, térképes vizualizáció.
-12     n8n Ingest API (POST /api/v1/admin/prices, X-Admin-Token auth).
-13     Jules aszinkron tesztelés: hibakezelés, timeout, távolságkorlát, tesztek.
-14     n8n Automatizációs Blueprint (cron, mock scraper, data transform, ingest).
-15     Docker konténerizáció (multi-stage Dockerfile, docker-compose.yml).
-16     (nem dokumentált külön fázisként)
-17     CI/CD pipeline, frontend tesztek, slog strukturált logolás.
-18     Swagger/OpenAPI, Rate Limiter middleware, retry logika, offline cache.
-19     Release Candidate 1, Android EAS build előkészítés.
-20     CORS javítás (ALLOWED_ORIGIN env var), middleware tesztek, merge sync.
-================================================================================
+Dátum: 2026-07-02 11:10
+Bejegyzés: 24. Fázis sikeresen befejezve: Deep Linking (smartshopper://), többnyelvűség (i18n hu/en), átfogó előfizetési és Paywall Jest tesztek (14/14 PASS), valamint az új vizuális arculat (icon.png, splash.png) integrálva.

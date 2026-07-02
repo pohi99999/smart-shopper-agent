@@ -1,0 +1,49 @@
+{
+  "paywall": {
+    "closeAccessibility": "Bezárás",
+    "heroTagline": "Vásárolj okosabban. Spórolj többet.",
+    "features": {
+      "unlimited": {
+        "title": "Korlátlan optimalizálás",
+        "description": "Naponta tetszőleges számú bevásárlólista feldolgozása az AI-motorral."
+      },
+      "noAds": {
+        "title": "Teljesen reklámmentes",
+        "description": "Élvezd az appot zavaró hirdetések és megszakítások nélkül."
+      },
+      "priceHistory": {
+        "title": "Intelligens árhistória",
+        "description": "Interaktív diagramok a termékek hetenkénti áringadozásairól."
+      },
+      "priceAlerts": {
+        "title": "Ár-riasztások",
+        "description": "Értesítés, ha a kedvenc terméked elér egy általad megadott célárat."
+      },
+      "favorites": {
+        "title": "Lista kedvencek",
+        "description": "Bevásárlólisták mentése és egyetlen koppintással visszatöltése."
+      },
+      "moreStores": {
+        "title": "Több bolt, jobb ár",
+        "description": "Kibővített boltlista: Lidl, Spar, Tesco és még több lánc összehasonlítása."
+      }
+    },
+    "pricing": {
+      "monthly": "Havi",
+      "monthlyPeriod": "/hó",
+      "yearly": "Éves",
+      "yearlyPeriod": "/év",
+      "savingsTag": "32% megtakarítás"
+    },
+    "cta": {
+      "subscribe": "Előfizetés indítása",
+      "cancelAnytime": "Bármikor lemondható",
+      "proActive": "✅ Pro fiók aktiválva!",
+      "accessibilityLabel": "Pro előfizetés indítása"
+    },
+    "restore": {
+      "button": "Korábbi vásárlás visszaállítása"
+    },
+    "legal": "Az előfizetés automatikusan megújul, hacsak a megújítás előtt legalább 24 órával le nem mondod. Az iTunes-fiókodból kerül a kifizetés a megerősítéskor."
+  }
+}

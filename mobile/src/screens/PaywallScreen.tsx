@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSubscription, PRODUCT_IDS } from '../context/SubscriptionContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -16,54 +17,26 @@ interface Props {
   onClose: () => void;
 }
 
-// ── Feature list data ─────────────────────────────────────────────────────────
+// ── Feature list item interface ───────────────────────────────────────────────
 
-interface Feature {
+interface FeatureItem {
   icon: string;
-  title: string;
-  description: string;
+  key: string;
 }
 
-const FEATURES: Feature[] = [
-  {
-    icon: '♾️',
-    title: 'Korlátlan optimalizálás',
-    description:
-      'Naponta tetszőleges számú bevásárlólista feldolgozása az AI-motorral.',
-  },
-  {
-    icon: '🚫',
-    title: 'Teljesen reklámmentes',
-    description: 'Élvezd az appot zavaró hirdetések és megszakítások nélkül.',
-  },
-  {
-    icon: '📊',
-    title: 'Intelligens árhistória',
-    description:
-      'Interaktív diagramok a termékek hetenkénti áringadozásairól.',
-  },
-  {
-    icon: '🔔',
-    title: 'Ár-riasztások',
-    description:
-      'Értesítés, ha a kedvenc terméked elér egy általad megadott célárát.',
-  },
-  {
-    icon: '📋',
-    title: 'Lista kedvencek',
-    description: 'Bevásárlólisták mentése és egyetlen koppintással visszatöltése.',
-  },
-  {
-    icon: '🏪',
-    title: 'Több bolt, jobb ár',
-    description:
-      'Kibővített boltlista: Lidl, Spar, Tesco és még több lánc összehasonlítása.',
-  },
+const FEATURE_ITEMS: FeatureItem[] = [
+  { icon: '♾️', key: 'unlimited' },
+  { icon: '🚫', key: 'noAds' },
+  { icon: '📊', key: 'priceHistory' },
+  { icon: '🔔', key: 'priceAlerts' },
+  { icon: '📋', key: 'favorites' },
+  { icon: '🏪', key: 'moreStores' },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function PaywallScreen({ onClose }: Props) {
+  const { t } = useTranslation();
   const { subscribe, restore, isLoading, isPro } = useSubscription();
 
   const handleSubscribe = useCallback(async () => {
@@ -88,7 +61,7 @@ export default function PaywallScreen({ onClose }: Props) {
       <TouchableOpacity
         style={styles.closeButton}
         onPress={onClose}
-        accessibilityLabel="Bezárás"
+        accessibilityLabel={t('paywall.closeAccessibility')}
         accessibilityRole="button"
       >
         <Text style={styles.closeIcon}>✕</Text>
@@ -107,21 +80,25 @@ export default function PaywallScreen({ onClose }: Props) {
           <Text style={styles.heroTitle}>Smart Shopper</Text>
           <Text style={styles.heroPro}>PRO</Text>
           <Text style={styles.heroTagline}>
-            Vásárolj okosabban. Spórolj többet.
+            {t('paywall.heroTagline')}
           </Text>
         </View>
 
         {/* Feature list */}
         <View style={styles.featuresCard}>
-          {FEATURES.map((f, i) => (
+          {FEATURE_ITEMS.map((item, i) => (
             <View
-              key={f.title}
-              style={[styles.featureRow, i < FEATURES.length - 1 && styles.featureRowBorder]}
+              key={item.key}
+              style={[styles.featureRow, i < FEATURE_ITEMS.length - 1 && styles.featureRowBorder]}
             >
-              <Text style={styles.featureIcon}>{f.icon}</Text>
+              <Text style={styles.featureIcon}>{item.icon}</Text>
               <View style={styles.featureText}>
-                <Text style={styles.featureTitle}>{f.title}</Text>
-                <Text style={styles.featureDescription}>{f.description}</Text>
+                <Text style={styles.featureTitle}>
+                  {t(`paywall.features.${item.key}.title`)}
+                </Text>
+                <Text style={styles.featureDescription}>
+                  {t(`paywall.features.${item.key}.description`)}
+                </Text>
               </View>
             </View>
           ))}
@@ -130,24 +107,24 @@ export default function PaywallScreen({ onClose }: Props) {
         {/* Pricing */}
         <View style={styles.pricingRow}>
           <PricingBadge
-            label="Havi"
+            label={t('paywall.pricing.monthly')}
             price="990 Ft"
-            period="/hó"
+            period={t('paywall.pricing.monthlyPeriod')}
             highlighted={false}
           />
           <PricingBadge
-            label="Éves"
+            label={t('paywall.pricing.yearly')}
             price="7 990 Ft"
-            period="/év"
+            period={t('paywall.pricing.yearlyPeriod')}
             highlighted
-            savingsTag="32% megtakarítás"
+            savingsTag={t('paywall.pricing.savingsTag')}
           />
         </View>
 
         {/* CTA */}
         {isPro ? (
           <View style={styles.successBanner}>
-            <Text style={styles.successText}>✅ Pro fiók aktiválva!</Text>
+            <Text style={styles.successText}>{t('paywall.cta.proActive')}</Text>
           </View>
         ) : (
           <TouchableOpacity
@@ -155,15 +132,15 @@ export default function PaywallScreen({ onClose }: Props) {
             onPress={handleSubscribe}
             disabled={isLoading}
             activeOpacity={0.85}
-            accessibilityLabel="Pro előfizetés indítása"
+            accessibilityLabel={t('paywall.cta.accessibilityLabel')}
             accessibilityRole="button"
           >
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
-                <Text style={styles.ctaText}>Előfizetés indítása</Text>
-                <Text style={styles.ctaSubText}>Bármikor lemondható</Text>
+                <Text style={styles.ctaText}>{t('paywall.cta.subscribe')}</Text>
+                <Text style={styles.ctaSubText}>{t('paywall.cta.cancelAnytime')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -174,16 +151,14 @@ export default function PaywallScreen({ onClose }: Props) {
           onPress={handleRestore}
           disabled={isLoading}
           style={styles.restoreButton}
-          accessibilityLabel="Korábbi vásárlás visszaállítása"
+          accessibilityLabel={t('paywall.restore.button')}
         >
-          <Text style={styles.restoreText}>Korábbi vásárlás visszaállítása</Text>
+          <Text style={styles.restoreText}>{t('paywall.restore.button')}</Text>
         </TouchableOpacity>
 
         {/* Legal */}
         <Text style={styles.legalText}>
-          Az előfizetés automatikusan megújul, hacsak a megújítás előtt legalább
-          24 órával le nem mondod. Az iTunes-fiókodból kerül a kifizetés a
-          megerősítéskor.
+          {t('paywall.legal')}
         </Text>
       </ScrollView>
     </View>

@@ -246,3 +246,29 @@ A 23. fázis során megvalósításra kerültek az n8n automatizációt élesít
 - A `.env` parser kezeli az inline kommenteket, idézőjelet és a `******` maszkolt értékeket.
 - A `simulate_webhook.js` 8 másodperces request timeout-tal rendelkezik, és értelmes hibaüzenetet ad vissza, ha a backend nem elérhető.
 
+## 24. Fázis: Deep Linking, többnyelvűség (i18n), Előfizetési Tesztek és Vizuális Arculat Integrációja (2026-07-02)
+
+A 24. fázis során teljeskörűen megvalósításra került a Deep Linking támogatás, a többnyelvűségi (i18n) infrastruktúra, az előfizetési réteg és Paywall felület átfogó Jest tesztelése, valamint az új prémium vizuális arculat integrációja.
+
+### Deep Linking és i18n Integráció
+- **Deep Linking:** A [mobile/app.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/app.json) fájlban beállításra került a `"scheme": "smartshopper"` séma. Az [App.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.tsx) komponens kiegészült az `expo-linking` eseményfigyelőjével, így a `smartshopper://paywall` link megnyitásakor a Paywall felület automatikusan felugrik.
+- **Többnyelvűség (i18n):** 
+  - Telepítésre kerültek az `i18next`, `react-i18next` és `expo-localization` csomagok.
+  - Létrejöttek a [mobile/src/locales/hu.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/locales/hu.json) és [mobile/src/locales/en.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/locales/en.json) nyelvi fájlok a Paywall felület magyar és angol fordításaival.
+  - Elkészült a [mobile/src/i18n/i18n.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/i18n/i18n.ts) inicializáló fájl, amely az eszköz alapértelmezett nyelvét észleli `expo-localization` segítségével (fallback: `hu`).
+  - A [PaywallScreen.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/PaywallScreen.tsx) refaktorálásra került a `useTranslation` hook használatára.
+
+### Vizuális Arculat Integrációja
+- A [mobile/app.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/app.json) frissítésre került a felhasználó által generált legújabb vizuális elemekkel:
+  - Alkalmazás ikon: `./assets/icon.png`
+  - Splash képernyő: `./assets/splash.png` (sötétkék `#0A192F` háttérszínnel)
+  - Android adaptive icon foreground: `./assets/icon.png`
+
+### Előfizetési Tesztek (Jest)
+- Elkészültek az átfogó Jest egység- és komponens tesztek:
+  - [mobile/src/services/subscriptionService.test.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/subscriptionService.test.ts): a szerviz réteg mock vásárlási és státusz-lekérdezési funkcióinak tesztelése.
+  - [mobile/src/context/SubscriptionContext.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/context/SubscriptionContext.test.tsx): a globális előfizetés-kontextus és állapotfrissítések tesztelése.
+  - [mobile/src/screens/PaywallScreen.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/PaywallScreen.test.tsx): a Paywall felület renderelési, gombnyomási és vásárlási folyamatainak tesztelése.
+- Az `npm test` futtatása mind az 5 teszt suite-on sikeresen zölden lefutott: **5/5 PASS, 14/14 teszt sikeres**.
+
+

@@ -1,0 +1,49 @@
+{
+  "paywall": {
+    "closeAccessibility": "Close",
+    "heroTagline": "Shop smarter. Save more.",
+    "features": {
+      "unlimited": {
+        "title": "Unlimited Optimization",
+        "description": "Process unlimited shopping lists daily with the AI engine."
+      },
+      "noAds": {
+        "title": "Ad-Free Experience",
+        "description": "Enjoy the app without annoying ads or interruptions."
+      },
+      "priceHistory": {
+        "title": "Smart Price History",
+        "description": "Interactive charts tracking weekly product price fluctuations."
+      },
+      "priceAlerts": {
+        "title": "Price Alerts",
+        "description": "Get notified when your favorite item reaches your target price."
+      },
+      "favorites": {
+        "title": "Favorite Lists",
+        "description": "Save shopping lists and reload them with a single tap."
+      },
+      "moreStores": {
+        "title": "More Stores, Better Prices",
+        "description": "Expanded store list: compare Lidl, Spar, Tesco, and more."
+      }
+    },
+    "pricing": {
+      "monthly": "Monthly",
+      "monthlyPeriod": "/mo",
+      "yearly": "Yearly",
+      "yearlyPeriod": "/yr",
+      "savingsTag": "Save 32%"
+    },
+    "cta": {
+      "subscribe": "Start Subscription",
+      "cancelAnytime": "Cancel anytime",
+      "proActive": "✅ Pro Account Active!",
+      "accessibilityLabel": "Start Pro subscription"
+    },
+    "restore": {
+      "button": "Restore Purchases"
+    },
+    "legal": "Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Payment will be charged to your account upon confirmation."
+  }
+}

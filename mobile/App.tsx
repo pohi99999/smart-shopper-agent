@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-native';
+import * as Linking from 'expo-linking';
+import './src/i18n/i18n';
 import { SubscriptionProvider } from './src/context/SubscriptionContext';
 import ShoppingListScreen from './src/screens/ShoppingListScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 
 export default function App() {
   const [paywallVisible, setPaywallVisible] = useState(false);
+
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const data = Linking.parse(event.url);
+      if (data.path === 'paywall' || data.hostname === 'paywall') {
+        setPaywallVisible(true);
+      }
+    };
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, []);
 
   return (
     <SubscriptionProvider>
@@ -21,5 +41,3 @@ export default function App() {
     </SubscriptionProvider>
   );
 }
-
-
