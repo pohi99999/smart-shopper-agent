@@ -9,6 +9,15 @@ jest.mock('expo-linking', () => ({
   addEventListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
 }));
 
+// Mock @sentry/react-native
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  wrap: (component: any) => component,
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+}));
+
+
 // Mock react-native-maps
 jest.mock('react-native-maps', () => {
   const React = require('react');
