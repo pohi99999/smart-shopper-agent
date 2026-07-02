@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-native';
 import * as Linking from 'expo-linking';
+import * as Sentry from '@sentry/react-native';
 import './src/i18n/i18n';
 import { SubscriptionProvider } from './src/context/SubscriptionContext';
 import ShoppingListScreen from './src/screens/ShoppingListScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 
-export default function App() {
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enableInExpoDevelopment: true,
+  debug: __DEV__,
+});
+
+function App() {
   const [paywallVisible, setPaywallVisible] = useState(false);
 
   useEffect(() => {
@@ -41,3 +48,5 @@ export default function App() {
     </SubscriptionProvider>
   );
 }
+
+export default Sentry.wrap(App);

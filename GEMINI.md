@@ -271,4 +271,18 @@ A 24. fázis során teljeskörűen megvalósításra került a Deep Linking tám
   - [mobile/src/screens/PaywallScreen.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/PaywallScreen.test.tsx): a Paywall felület renderelési, gombnyomási és vásárlási folyamatainak tesztelése.
 - Az `npm test` futtatása mind az 5 teszt suite-on sikeresen zölden lefutott: **5/5 PASS, 14/14 teszt sikeres**.
 
+## 25. Fázis: Sentry Hibakövető Rendszer (Crash Reporting) Integrációja (2026-07-02)
+
+A 25. fázis során megvalósításra került a Sentry hibakövető és telemetriai rendszer szakszerű integrációja a React Native (Expo) mobil frontendbe.
+
+### Telepítés és Konfiguráció
+- **Függőségek:** Telepítésre került a `@sentry/react-native` SDK a `mobile` projektben.
+- **Expo Config Plugin:** A [mobile/app.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/app.json) fájl `plugins` tömbjéhez hozzáadásra került a `"@sentry/react-native/expo"` plugin.
+- **Sentry Inicializálás:** Az [App.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.tsx) fájlban inicializálásra került a `Sentry.init` a `process.env.EXPO_PUBLIC_SENTRY_DSN` környezeti változóval, `enableInExpoDevelopment: true` és `debug: __DEV__` beállításokkal. Az exportált `App` komponens becsomagolásra került a `Sentry.wrap(App)` hibakezelővel.
+
+### Tesztelés
+- Elkészült a [mobile/App.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.test.tsx) tesztfájl, ami verifikálja az App komponens hibátlan renderelését a Sentry wrapperrel.
+- Az `npm test` futtatásával mind a 6 teszt suite (15 teszt) hibátlanul zölden lefutott: **6/6 PASS, 15/15 teszt sikeres**.
+
+
 

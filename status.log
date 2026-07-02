@@ -36,3 +36,6 @@ Bejegyzés: Prémium arculati fejléc és egyedi SVG logó lefejlesztve és inte
 
 Dátum: 2026-07-02 11:10
 Bejegyzés: 24. Fázis sikeresen befejezve: Deep Linking (smartshopper://), többnyelvűség (i18n hu/en), átfogó előfizetési és Paywall Jest tesztek (14/14 PASS), valamint az új vizuális arculat (icon.png, splash.png) integrálva.
+
+Dátum: 2026-07-02 11:47
+Bejegyzés: 25. Fázis sikeresen befejezve: @sentry/react-native telepítve, Expo config plugin (@sentry/react-native/expo) hozzáadva, App.tsx Sentry.init és Sentry.wrap (EXPO_PUBLIC_SENTRY_DSN) beállítva, Jest tesztek (6/6 PASS, 15/15 teszt) lefutva.
