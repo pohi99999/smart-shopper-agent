@@ -1,6 +1,16 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, act, waitFor, fireEvent } from '@testing-library/react-native';
 import { Text, Button } from 'react-native';
+
+jest.mock('react-native-purchases', () => ({
+  configure: jest.fn(),
+  setLogLevel: jest.fn(),
+  getCustomerInfo: jest.fn(),
+  purchaseProduct: jest.fn(),
+  restorePurchases: jest.fn(),
+  LOG_LEVEL: { DEBUG: 'DEBUG' },
+}));
+
 import { SubscriptionProvider, useSubscription } from './SubscriptionContext';
 import * as subscriptionService from '../services/subscriptionService';
 

@@ -1,5 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+
+jest.mock('react-native-purchases', () => ({
+  configure: jest.fn(),
+  setLogLevel: jest.fn(),
+  getCustomerInfo: jest.fn(),
+  purchaseProduct: jest.fn(),
+  restorePurchases: jest.fn(),
+  LOG_LEVEL: { DEBUG: 'DEBUG' },
+}));
+
 import PaywallScreen from './PaywallScreen';
 import { SubscriptionProvider } from '../context/SubscriptionContext';
 import i18n from '../i18n/i18n';

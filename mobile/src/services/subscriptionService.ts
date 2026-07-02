@@ -1,15 +1,5 @@
-/**
- * subscriptionService.ts
- *
- * Abstraction layer for subscription state management.
- * Currently uses a mock implementation. Replace the body of
- * `fetchSubscriptionStatus` with RevenueCat SDK calls when integrating.
- *
- * RevenueCat integration path (Phase 23+):
- *   import Purchases from 'react-native-purchases';
- *   const info = await Purchases.getCustomerInfo();
- *   return { isPro: info.entitlements.active['pro'] !== undefined };
- */
+import { Platform } from 'react-native';
+import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 
 /** Represents the user's current subscription status. */
 export interface SubscriptionStatus {
@@ -28,48 +18,140 @@ export const PRODUCT_IDS = {
 
 export type ProductId = (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS];
 
+export const PRO_ENTITLEMENT = 'pro';
+
+let isInitialized = false;
+
 /**
- * Fetches the current subscription status.
- * Mock: always returns { isPro: false }.
+ * Initializes RevenueCat SDK with platform-specific API key.
  */
-export async function fetchSubscriptionStatus(): Promise<SubscriptionStatus> {
-  // TODO (Phase 23): replace with RevenueCat getCustomerInfo()
-  await _simulateLatency(300);
-  return { isPro: false, expiresAt: null, productId: null };
+export function initRevenueCat(): boolean {
+  if (isInitialized) {
+    return true;
+  }
+
+  const apiKey =
+    Platform.OS === 'ios'
+      ? process.env.EXPO_PUBLIC_RC_APPLE_KEY
+      : process.env.EXPO_PUBLIC_RC_GOOGLE_KEY;
+
+  if (!apiKey) {
+    if (__DEV__) {
+      console.log('[SubscriptionService] RevenueCat API key missing. Running in fallback mode.');
+    }
+    return false;
+  }
+
+  try {
+    if (__DEV__) {
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    }
+    Purchases.configure({ apiKey });
+    isInitialized = true;
+    return true;
+  } catch (error) {
+    console.error('[SubscriptionService] Failed to initialize RevenueCat:', error);
+    return false;
+  }
 }
 
 /**
- * Initiates a purchase flow for the given product.
- * Mock: simulates success and returns isPro: true.
+ * Safely extracts SubscriptionStatus from RevenueCat CustomerInfo.
  */
-export async function purchaseSubscription(
-  productId: ProductId,
-): Promise<SubscriptionStatus> {
-  // TODO (Phase 23): replace with Purchases.purchaseProduct(productId)
-  console.log(`[SubscriptionService] Mock purchase initiated: ${productId}`);
-  await _simulateLatency(800);
+export function parseCustomerInfo(customerInfo?: CustomerInfo | null): SubscriptionStatus {
+  if (!customerInfo || !customerInfo.entitlements || !customerInfo.entitlements.active) {
+    return {
+      isPro: false,
+      expiresAt: null,
+      productId: null,
+    };
+  }
+
+  const entitlement =
+    customerInfo.entitlements.active[PRO_ENTITLEMENT] ||
+    customerInfo.entitlements.active['pro_entitlement'];
+
+  if (entitlement) {
+    return {
+      isPro: true,
+      expiresAt: entitlement.expirationDate ?? null,
+      productId: entitlement.productIdentifier ?? null,
+    };
+  }
+
   return {
-    isPro: true,
-    expiresAt: _mockExpiryDate(productId),
-    productId,
+    isPro: false,
+    expiresAt: null,
+    productId: null,
   };
 }
 
 /**
+ * Fetches the current subscription status from RevenueCat.
+ */
+export async function fetchSubscriptionStatus(): Promise<SubscriptionStatus> {
+  const initialized = initRevenueCat();
+  if (!initialized) {
+    return { isPro: false, expiresAt: null, productId: null };
+  }
+
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    return parseCustomerInfo(customerInfo);
+  } catch (error) {
+    console.error('[SubscriptionService] Error fetching subscription status:', error);
+    return { isPro: false, expiresAt: null, productId: null };
+  }
+}
+
+/**
+ * Initiates a purchase flow for the given product identifier.
+ */
+export async function purchaseSubscription(
+  productId: ProductId,
+): Promise<SubscriptionStatus> {
+  const initialized = initRevenueCat();
+  if (!initialized) {
+    console.log(`[SubscriptionService] Mock purchase executed (no API key configured): ${productId}`);
+    return {
+      isPro: true,
+      expiresAt: _mockExpiryDate(productId),
+      productId,
+    };
+  }
+
+  try {
+    const { customerInfo } = await Purchases.purchaseProduct(productId);
+    return parseCustomerInfo(customerInfo);
+  } catch (error: any) {
+    if (error?.userCancelled) {
+      console.log('[SubscriptionService] User cancelled purchase flow');
+    } else {
+      console.error('[SubscriptionService] Purchase error:', error);
+    }
+    throw error;
+  }
+}
+
+/**
  * Restores previously purchased subscriptions.
- * Mock: returns isPro: false (no prior purchase in mock).
  */
 export async function restorePurchases(): Promise<SubscriptionStatus> {
-  // TODO (Phase 23): replace with Purchases.restorePurchases()
-  await _simulateLatency(600);
-  return { isPro: false, expiresAt: null, productId: null };
+  const initialized = initRevenueCat();
+  if (!initialized) {
+    return { isPro: false, expiresAt: null, productId: null };
+  }
+
+  try {
+    const customerInfo = await Purchases.restorePurchases();
+    return parseCustomerInfo(customerInfo);
+  } catch (error) {
+    console.error('[SubscriptionService] Restore purchases error:', error);
+    throw error;
+  }
 }
 
 // ── Private helpers ──────────────────────────────────────────────────────────
-
-function _simulateLatency(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function _mockExpiryDate(productId: ProductId): string {
   const d = new Date();

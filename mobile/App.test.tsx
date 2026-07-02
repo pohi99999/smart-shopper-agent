@@ -1,5 +1,15 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+
+jest.mock('react-native-purchases', () => ({
+  configure: jest.fn(),
+  setLogLevel: jest.fn(),
+  getCustomerInfo: jest.fn(),
+  purchaseProduct: jest.fn(),
+  restorePurchases: jest.fn(),
+  LOG_LEVEL: { DEBUG: 'DEBUG' },
+}));
+
 import App from './App';
 
 // Mock expo-linking
@@ -16,7 +26,6 @@ jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
   captureMessage: jest.fn(),
 }));
-
 
 // Mock react-native-maps
 jest.mock('react-native-maps', () => {

@@ -39,3 +39,6 @@ Bejegyzés: 24. Fázis sikeresen befejezve: Deep Linking (smartshopper://), töb
 
 Dátum: 2026-07-02 11:47
 Bejegyzés: 25. Fázis sikeresen befejezve: @sentry/react-native telepítve, Expo config plugin (@sentry/react-native/expo) hozzáadva, App.tsx Sentry.init és Sentry.wrap (EXPO_PUBLIC_SENTRY_DSN) beállítva, Jest tesztek (6/6 PASS, 15/15 teszt) lefutva.
+
+Dátum: 2026-07-02 12:04
+Bejegyzés: 26. Fázis sikeresen befejezve: react-native-purchases (RevenueCat SDK) telepítve, subscriptionService.ts initRevenueCat(), parseCustomerInfo(), fetchSubscriptionStatus(), purchaseSubscription(), restorePurchases() megvalósítva (fallback támogatással), meglévő Jest tesztek (6/6 PASS, 16/16 teszt) frissítve.

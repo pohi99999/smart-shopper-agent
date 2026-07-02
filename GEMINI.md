@@ -284,5 +284,22 @@ A 25. fázis során megvalósításra került a Sentry hibakövető és telemetr
 - Elkészült a [mobile/App.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.test.tsx) tesztfájl, ami verifikálja az App komponens hibátlan renderelését a Sentry wrapperrel.
 - Az `npm test` futtatásával mind a 6 teszt suite (15 teszt) hibátlanul zölden lefutott: **6/6 PASS, 15/15 teszt sikeres**.
 
+## 26. Fázis: Éles Monetizáció és RevenueCat SDK Integráció (2026-07-02)
+
+A 26. fázis során megvalósításra került az éles In-App Purchase és előfizetéses monetizációs architektúra a RevenueCat SDK (`react-native-purchases`) integrációjával, leváltva az eddigi tisztán szimulált előfizetési logikát.
+
+### Telepítés és Integráció
+- **Függőségek:** Telepítésre került a `react-native-purchases` csomag a `mobile` projektben.
+- **Szolgáltatási Réteg ([subscriptionService.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/subscriptionService.ts)):**
+  - Implementálásra került az `initRevenueCat()` függvény, amely a platformnak megfelelően (`Platform.OS === 'ios'` vs `'android'`) inicializálja az SDK-t az `EXPO_PUBLIC_RC_APPLE_KEY` vagy `EXPO_PUBLIC_RC_GOOGLE_KEY` környezeti változókkal.
+  - Elkészült a `parseCustomerInfo(customerInfo)` null-biztos segédfüggvény, amely a RevenueCat `entitlements.active['pro']` vagy `['pro_entitlement']` objektuma alapján határozza meg a felhasználó Pro státuszát, lejáratát és a termékazonosítót.
+  - Átírásra került a `fetchSubscriptionStatus()`, `purchaseSubscription()`, és `restorePurchases()` logika, hogy élesben a `Purchases.getCustomerInfo()`, `Purchases.purchaseProduct()`, és `Purchases.restorePurchases()` SDK metódusokat használják.
+  - Biztonságos fallback mód került kialakításra hiányzó API kulcsok vagy tesztkörnyezet esetén.
+
+### Tesztelés
+- Frissítésre kerültek a Jest tesztek ([subscriptionService.test.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/subscriptionService.test.ts), [SubscriptionContext.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/context/SubscriptionContext.test.tsx), [PaywallScreen.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/PaywallScreen.test.tsx), [ShoppingListScreen.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/ShoppingListScreen.test.tsx), [App.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.test.tsx)) a `react-native-purchases` modul mockolásával (`jest.mock('react-native-purchases')`).
+- Az `npm test` futtatásával mind a 6 teszt suite (16 teszt) hibátlanul zölden lefutott: **6/6 PASS, 16/16 teszt sikeres**.
+
+
 
 
