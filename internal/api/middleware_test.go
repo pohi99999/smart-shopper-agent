@@ -122,7 +122,7 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 		{
 			name:           "Default origin when env var is not set",
 			allowedOrigin:  "",
-			expectedOrigin: "*",
+			expectedOrigin: "",
 		},
 		{
 			name:           "Custom origin when env var is set",
