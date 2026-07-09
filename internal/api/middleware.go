@@ -9,39 +9,59 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// visitor struct holds the rate limiter and the last time the IP was seen
+type visitor struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
+}
+
 // rateLimiter struct holds the limiters for different IP addresses
 type rateLimiter struct {
-	limiters map[string]*rate.Limiter
-	mu       sync.Mutex
-	rate     rate.Limit
-	burst    int
+	visitors    map[string]*visitor
+	mu          sync.Mutex
+	rate        rate.Limit
+	burst       int
+	lastCleanup time.Time
 }
 
 // NewRateLimiter creates a new rate limiter (10 requests per minute = ~0.16 req/sec)
 func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
 	return &rateLimiter{
-		limiters: make(map[string]*rate.Limiter),
-		rate:     r,
-		burst:    b,
+		visitors:    make(map[string]*visitor),
+		rate:        r,
+		burst:       b,
+		lastCleanup: time.Now(),
 	}
 }
 
-// getLimiter returns the limiter for the provided IP address.
+// getLimiter returns the limiter for the provided IP address and performs opportunistic cleanup.
 func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	limiter, exists := i.limiters[ip]
-	if !exists {
-		limiter = rate.NewLimiter(i.rate, i.burst)
-		i.limiters[ip] = limiter
+	now := time.Now()
+
+	// Opportunistic cleanup: Every 3 minutes, remove entries that haven't been seen for 3 minutes
+	if now.Sub(i.lastCleanup) > 3*time.Minute {
+		for ip, v := range i.visitors {
+			if now.Sub(v.lastSeen) > 3*time.Minute {
+				delete(i.visitors, ip)
+			}
+		}
+		i.lastCleanup = now
 	}
 
-	return limiter
-}
+	v, exists := i.visitors[ip]
+	if !exists {
+		limiter := rate.NewLimiter(i.rate, i.burst)
+		v = &visitor{limiter: limiter, lastSeen: now}
+		i.visitors[ip] = v
+	} else {
+		v.lastSeen = now
+	}
 
-// Cleanup periodically removes limiters for IPs that haven't been seen in a while (omitted for brevity, or we can use a simpler approach)
-// Since this is a simple implementation, we'll just keep them. In a real scenario, use a cache with TTL.
+	return v.limiter
+}
 
 var limiter = NewRateLimiter(rate.Every(time.Minute/10), 10) // 10 requests per minute
 
