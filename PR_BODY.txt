@@ -1,0 +1,6 @@
+🎯 **What:** The `PriceScraper.ScrapePrice` function lacked unit test coverage. Since this function is crucial for looking up product prices and falling back to a default value, it's a good candidate for testing.
+📊 **Coverage:** The new `TestScrapePrice` covers three main scenarios:
+  1. Both the product and the shop exist in the in-memory lookup.
+  2. The shop exists, but the product does not.
+  3. The shop does not exist.
+✨ **Result:** Test coverage in `internal/mcp` has increased and the functionality of `PriceScraper.ScrapePrice` is now validated, ensuring changes won't cause regressions.
