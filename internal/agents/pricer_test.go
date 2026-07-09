@@ -49,3 +49,29 @@ func TestPricer_GetPrices(t *testing.T) {
 		t.Errorf("Expected Aldi total > 0, got %f", totals["Aldi"])
 	}
 }
+
+func TestPricer_GetPrices_EmptyList(t *testing.T) {
+	scraper := mcp.NewPriceScraper()
+	pricer := NewPricer(scraper)
+
+	list := models.ShoppingList{
+		Items: []models.ShoppingItem{}, // Empty list
+	}
+
+	totals, err := pricer.GetPrices(list)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(totals) != 2 {
+		t.Errorf("Expected 2 chains (Aldi, Interspar), got %d", len(totals))
+	}
+
+	if val, ok := totals["Aldi"]; !ok || val != 0 {
+		t.Errorf("Expected Aldi total to be 0, got %f", val)
+	}
+
+	if val, ok := totals["Interspar"]; !ok || val != 0 {
+		t.Errorf("Expected Interspar total to be 0, got %f", val)
+	}
+}
