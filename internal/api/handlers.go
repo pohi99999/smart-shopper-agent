@@ -132,12 +132,19 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	adminToken := os.Getenv("ADMIN_TOKEN")
+	if adminToken == "" {
+		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
+		return
+	}
+
+	token := r.Header.Get("X-Admin-Token")
+	if token != adminToken {
+		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	if r.Method == http.MethodGet {
-		token := r.Header.Get("X-Admin-Token")
-		if token != "secret-admin-token-123" {
-			SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
 
 		// This is a stub implementation. In a real application, you would
 		// fetch the prices from a database or memory.
@@ -164,18 +171,6 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method == http.MethodPost {
-		adminToken := os.Getenv("ADMIN_TOKEN")
-		if adminToken == "" {
-			SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
-			return
-		}
-
-		token := r.Header.Get("X-Admin-Token")
-		if token != adminToken {
-			SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			SendJSONError(w, "Failed to read request body", http.StatusBadRequest)

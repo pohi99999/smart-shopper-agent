@@ -13,8 +13,27 @@ import (
 
 func TestAdminPricesHandler(t *testing.T) {
 	handler := NewAPIHandler(nil, nil, nil)
+	t.Run("GET Server Configuration Error", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
+		req.Header.Set("X-Admin-Token", "some-token")
+		rec := httptest.NewRecorder()
+
+		handler.AdminPricesHandler(rec, req)
+
+		if rec.Code != http.StatusInternalServerError {
+			t.Errorf("Expected 500 Internal Server Error, got %d", rec.Code)
+		}
+	})
 
 	t.Run("Missing Token", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		rec := httptest.NewRecorder()
 
@@ -35,6 +54,10 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Invalid Token", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "invalid-token")
 		rec := httptest.NewRecorder()
@@ -47,6 +70,10 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Valid Token", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
 		rec := httptest.NewRecorder()
@@ -68,6 +95,10 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Invalid Method", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
 		rec := httptest.NewRecorder()
