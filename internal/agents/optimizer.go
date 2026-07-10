@@ -52,7 +52,7 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 		return models.RoutePlan{}, fmt.Errorf("no shops found within 50 km")
 	}
 
-	var items []string
+	items := make([]string, 0, len(list.Items))
 	for _, item := range list.Items {
 		items = append(items, item.Name)
 	}
