@@ -42,3 +42,6 @@ Bejegyzés: 25. Fázis sikeresen befejezve: @sentry/react-native telepítve, Exp
 
 Dátum: 2026-07-02 12:04
 Bejegyzés: 26. Fázis sikeresen befejezve: react-native-purchases (RevenueCat SDK) telepítve, subscriptionService.ts initRevenueCat(), parseCustomerInfo(), fetchSubscriptionStatus(), purchaseSubscription(), restorePurchases() megvalósítva (fallback támogatással), meglévő Jest tesztek (6/6 PASS, 16/16 teszt) frissítve.
+
+Dátum: 2026-07-10 12:20
+Bejegyzés: 27. Fázis sikeresen befejezve: Jules legújabb aszinkron fejlesztései, javításai és kódminőségi egységtesztjei beolvasztásra és integrálásra kerültek a main ágba (PriceScraper tesztek, Pricer él-eset teszt, Optimizer szelet-allokáció optimalizálás, biztonságos és dinamikus admin token kezelés, robusztus CORS default, rate limiter GC, JSON hiba tesztek). Minden teszt (backend: go test és frontend: npm test) sikeresen lefutott (16/16 PASS). Helyi main ág szinkronizálva a távoli GitHub repóval.

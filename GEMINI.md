@@ -300,6 +300,19 @@ A 26. fázis során megvalósításra került az éles In-App Purchase és előf
 - Frissítésre kerültek a Jest tesztek ([subscriptionService.test.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/subscriptionService.test.ts), [SubscriptionContext.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/context/SubscriptionContext.test.tsx), [PaywallScreen.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/PaywallScreen.test.tsx), [ShoppingListScreen.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/screens/ShoppingListScreen.test.tsx), [App.test.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.test.tsx)) a `react-native-purchases` modul mockolásával (`jest.mock('react-native-purchases')`).
 - Az `npm test` futtatásával mind a 6 teszt suite (16 teszt) hibátlanul zölden lefutott: **6/6 PASS, 16/16 teszt sikeres**.
 
+## 27. Fázis: Jules Aszinkron Háttérmunkáinak Integrálása és Tesztelése (2026-07-10)
 
+A 27. fázis során beolvasztásra és integrálásra kerültek a `main` ágba Jules legújabb háttérben végzett fejlesztései, javításai és kódminőségi tesztjei.
 
+### Beépített Fejlesztések és Javítások
+- **PriceScraper egységtesztek:** Elkészült az [price_scraper_mcp_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/price_scraper_mcp_test.go) tesztfájl, amely ellenőrzi a `PriceScraper.ScrapePrice` működését mind a meglévő, mind a nem létező termékek/boltok esetében. Hozzáadásra került a `TestGetShopCoordinates` is, amely ellenőrzi a GPS koordináták sikeres lekérését és a hibaágat hiányzó boltlánc esetén.
+- **Pricer él-eset teszt:** A [pricer_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/pricer_test.go) kibővült az üres bemeneti tételek listáját ellenőrző teszt esettel, garantálva, hogy a Pricer ne dőljön össze üres listák feldolgozásakor.
+- **Távolság számító szelet optimalizálás:** Az [optimizer.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/optimizer.go) fájlban az `items` szelet allokációja memóriahatékonyabbá vált (`var items []string` allokáció csere dynamic appenddel).
+- **Hardcoded admin token eltávolítása:** Az [AdminPricesHandler](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) végponton a GET és POST kérések admin token ellenőrzései szétválasztásra és biztonságossá tételre kerültek, teljesen megszüntetve a backend kódjában lévő korábbi bedrótozott értékeket, egységesen az `ADMIN_TOKEN` környezeti változóra támaszkodva.
+- **CORS alapértelmezett érték:** A [middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) fájlban a CORS Access-Control-Allow-Origin fejléc értéke biztonságosabbá és robusztusabbá vált. Ha az `ALLOWED_ORIGIN` környezeti változó nincs megadva, automatikusan a `*` (wildcard) értékre esik vissza.
+- **Rate Limiter karbantartás:** Kialakításra került egy opportunista tisztító algoritmus a [middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) fájlban lévő rate limiterben, amely rendszeresen eltávolítja a lejárt IP-címek bejegyzéseit a memóriából, megelőzve az esetleges memória szivárgást.
+- **JSON hiba tesztek:** A [handlers_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_test.go) fájl kiegészült a `SendJSONError` segédfüggvény működését ellenőrző tesztekkel.
 
+### Tesztek futtatása
+- A backend oldali tesztek (`go test ./...`) hibátlanul zöldek.
+- A React Native frontend oldali tesztek (`npm test` a `mobile` könyvtárban) hibátlanul lefutottak: **6/6 PASS, 16/16 teszt sikeres**.
