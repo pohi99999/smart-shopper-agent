@@ -305,3 +305,33 @@ func TestOptimizeHandler_ParserError(t *testing.T) {
 		t.Errorf("Expected 500 Internal Server Error, got %d", rec.Code)
 	}
 }
+
+func TestSendJSONError(t *testing.T) {
+	rec := httptest.NewRecorder()
+	expectedMessage := "Test Error Message"
+	expectedStatusCode := http.StatusBadRequest
+
+	SendJSONError(rec, expectedMessage, expectedStatusCode)
+
+	if rec.Code != expectedStatusCode {
+		t.Errorf("Expected status code %d, got %d", expectedStatusCode, rec.Code)
+	}
+
+	contentType := rec.Header().Get("Content-Type")
+	if contentType != "application/json" {
+		t.Errorf("Expected Content-Type 'application/json', got '%s'", contentType)
+	}
+
+	var errResp ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+		t.Fatalf("Failed to decode JSON error response: %v", err)
+	}
+
+	if errResp.Error != expectedMessage {
+		t.Errorf("Expected error message '%s', got '%s'", expectedMessage, errResp.Error)
+	}
+
+	if errResp.Code != expectedStatusCode {
+		t.Errorf("Expected error code %d in JSON body, got %d", expectedStatusCode, errResp.Code)
+	}
+}
