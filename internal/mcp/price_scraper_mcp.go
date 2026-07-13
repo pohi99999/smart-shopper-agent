@@ -18,6 +18,11 @@ type PriceResponse struct {
 	Available   bool    `json:"available"`
 }
 
+type PriceBatchRequest struct {
+	ShopChain    string   `json:"shop_chain"`
+	ProductNames []string `json:"product_names"`
+}
+
 type ShopData struct {
 	Coordinates Coordinates        `json:"coordinates"`
 	Prices      map[string]float64 `json:"prices"`
@@ -65,6 +70,37 @@ func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
 		Price:       price,
 		Available:   available,
 	}, nil
+}
+
+func (ps *PriceScraper) ScrapePrices(req PriceBatchRequest) ([]PriceResponse, error) {
+	responses := make([]PriceResponse, len(req.ProductNames))
+	shopData, shopExists := ps.shops[req.ShopChain]
+
+	for i, name := range req.ProductNames {
+		price := 299.0
+		available := false
+
+		if shopExists {
+			if p, found := shopData.Prices[name]; found {
+				price = p
+				available = true
+			}
+		}
+
+		if !available {
+			price = 299.0
+			available = true
+		}
+
+		responses[i] = PriceResponse{
+			ProductName: name,
+			ShopChain:   req.ShopChain,
+			Price:       price,
+			Available:   available,
+		}
+	}
+
+	return responses, nil
 }
 
 func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error) {
