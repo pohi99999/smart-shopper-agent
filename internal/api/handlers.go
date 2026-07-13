@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -139,7 +140,7 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	if token != adminToken {
+	if subtle.ConstantTimeCompare([]byte(token), []byte(adminToken)) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
