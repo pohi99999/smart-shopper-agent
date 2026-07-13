@@ -112,26 +112,17 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AdminPricesHandler godoc
-// @Summary Manage shop prices
-// @Description Fetches or updates shop prices. Requires an X-Admin-Token header.
+// AdminPricesGetHandler godoc
+// @Summary Fetch shop prices
+// @Description Fetches shop prices. Requires an X-Admin-Token header.
 // @Tags admin
-// @Accept json
 // @Produce json
 // @Param X-Admin-Token header string true "Admin Token"
 // @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
-// @Failure 405 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [get]
-// @Router /admin/prices [post]
-func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
+func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Request) {
 	adminToken := os.Getenv("ADMIN_TOKEN")
 	if adminToken == "" {
 		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
@@ -144,63 +135,82 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if r.Method == http.MethodGet {
-
-		// This is a stub implementation. In a real application, you would
-		// fetch the prices from a database or memory.
-		prices := map[string]interface{}{
-			"status": "success",
-			"data": map[string]map[string]float64{
-				"Aldi": {
-					"tej":    300,
-					"kenyer": 400,
-				},
-				"Interspar": {
-					"tej":    350,
-					"kenyer": 380,
-				},
+	// This is a stub implementation. In a real application, you would
+	// fetch the prices from a database or memory.
+	prices := map[string]interface{}{
+		"status": "success",
+		"data": map[string]map[string]float64{
+			"Aldi": {
+				"tej":    300,
+				"kenyer": 400,
 			},
-		}
+			"Interspar": {
+				"tej":    350,
+				"kenyer": 380,
+			},
+		},
+	}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(prices); err != nil {
-			SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
-			return
-		}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(prices); err != nil {
+		SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+// AdminPricesPostHandler godoc
+// @Summary Update shop prices
+// @Description Updates shop prices. Requires an X-Admin-Token header.
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param X-Admin-Token header string true "Admin Token"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/prices [post]
+func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Request) {
+	adminToken := os.Getenv("ADMIN_TOKEN")
+	if adminToken == "" {
+		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
 
-	if r.Method == http.MethodPost {
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			SendJSONError(w, "Failed to read request body", http.StatusBadRequest)
-			return
-		}
-
-		var temp interface{}
-		if err := json.Unmarshal(bodyBytes, &temp); err != nil {
-			SendJSONError(w, "Invalid JSON body", http.StatusBadRequest)
-			return
-		}
-
-		filePath := "internal/data/prices.json"
-		if _, err := os.Stat(filePath); err != nil {
-			if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
-				filePath = "../../internal/data/prices.json"
-			}
-		}
-
-		if err := os.WriteFile(filePath, bodyBytes, 0644); err != nil {
-			SendJSONError(w, "Failed to save prices: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"status":  "success",
-			"message": "Prices updated successfully",
-		})
+	token := r.Header.Get("X-Admin-Token")
+	if token != adminToken {
+		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		SendJSONError(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var temp interface{}
+	if err := json.Unmarshal(bodyBytes, &temp); err != nil {
+		SendJSONError(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	filePath := "internal/data/prices.json"
+	if _, err := os.Stat(filePath); err != nil {
+		if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
+			filePath = "../../internal/data/prices.json"
+		}
+	}
+
+	if err := os.WriteFile(filePath, bodyBytes, 0644); err != nil {
+		SendJSONError(w, "Failed to save prices: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"status":  "success",
+		"message": "Prices updated successfully",
+	})
 }

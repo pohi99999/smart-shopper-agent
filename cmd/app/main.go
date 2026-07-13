@@ -9,9 +9,9 @@ import (
 	"smart-shopper-agent/internal/api"
 	"smart-shopper-agent/internal/mcp"
 
-	_ "smart-shopper-agent/docs"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
+	_ "smart-shopper-agent/docs"
 )
 
 // @title Smart Shopper Agent API
@@ -46,13 +46,15 @@ func main() {
 
 	// Combine Middlewares
 	// Both endpoints need security headers, but optimize also needs rate limiting
-	
+
 	optimizeHandler := api.SecurityHeadersMiddleware(api.RateLimitMiddleware(apiHandler.OptimizeHandler))
-	adminPricesHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesHandler)
+	adminPricesGetHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesGetHandler)
+	adminPricesPostHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesPostHandler)
 
 	// 4. Register route
 	http.HandleFunc("/api/v1/optimize", optimizeHandler)
-	http.HandleFunc("/api/v1/admin/prices", adminPricesHandler)
+	http.HandleFunc("GET /api/v1/admin/prices", adminPricesGetHandler)
+	http.HandleFunc("POST /api/v1/admin/prices", adminPricesPostHandler)
 
 	// Register Swagger route
 	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
