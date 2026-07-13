@@ -86,7 +86,7 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 		Timeout: 10 * time.Second,
 	}
 
-	apiURL := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", apiKey)
+	apiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 	var lastErr error
 	maxRetries := 2
@@ -102,6 +102,7 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 			return models.ShoppingList{}, fmt.Errorf("failed to create HTTP request: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("x-goog-api-key", apiKey)
 
 		resp, err := client.Do(req)
 		if err != nil {
