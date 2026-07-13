@@ -171,6 +171,7 @@ func (h *APIHandler) AdminPricesHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method == http.MethodPost {
+		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			SendJSONError(w, "Failed to read request body", http.StatusBadRequest)
