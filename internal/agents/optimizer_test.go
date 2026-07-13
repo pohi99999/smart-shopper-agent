@@ -100,3 +100,85 @@ func TestOptimizer_DistanceLimit(t *testing.T) {
 		t.Errorf("Expected 'no shops found within 50 km', got: %v", err)
 	}
 }
+
+func TestOptimizer_EmptyPrices(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
+	// Change to root dir so internal/data/prices.json can be found
+	os.Chdir("../..")
+	defer os.Chdir("internal/agents")
+	scraper := mcp.NewPriceScraper()
+	planner := mcp.NewRoutePlanner()
+	optimizer := NewOptimizer(planner, scraper)
+
+	list := models.ShoppingList{
+		Items: []models.ShoppingItem{
+			{Name: "kenyér", Quantity: 1},
+		},
+	}
+
+	prices := map[string]float64{}
+
+	userCoords := mcp.Coordinates{
+		Latitude:  46.8400, // Zalaegerszeg
+		Longitude: 16.8439,
+	}
+
+	_, err := optimizer.Optimize(list, prices, userCoords)
+
+	if err == nil {
+		t.Fatalf("Expected error 'no shops found within 50 km', got nil")
+	}
+
+	if err.Error() != "no shops found within 50 km" {
+		t.Errorf("Expected 'no shops found within 50 km', got: %v", err)
+	}
+}
+
+func TestOptimizer_EmptyItems(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
+	// Change to root dir so internal/data/prices.json can be found
+	os.Chdir("../..")
+	defer os.Chdir("internal/agents")
+	scraper := mcp.NewPriceScraper()
+	planner := mcp.NewRoutePlanner()
+	optimizer := NewOptimizer(planner, scraper)
+
+	list := models.ShoppingList{
+		Items: []models.ShoppingItem{},
+	}
+
+	prices := map[string]float64{
+		"Aldi": 500.0,
+	}
+
+	userCoords := mcp.Coordinates{
+		Latitude:  46.8400, // Zalaegerszeg
+		Longitude: 16.8439,
+	}
+
+	plan, err := optimizer.Optimize(list, prices, userCoords)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "OSRM API timeout") || strings.Contains(err.Error(), "failed to call") {
+			t.Logf("OSRM API failed (expected in CI sometimes): %v", err)
+			return // Skip the rest of the test
+		}
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(plan.Steps) != 1 {
+		t.Fatalf("Expected 1 step in plan, got %d", len(plan.Steps))
+	}
+
+	if plan.Steps[0].ShopName != "Aldi" {
+		t.Errorf("Expected Aldi, got %s", plan.Steps[0].ShopName)
+	}
+
+	if len(plan.Steps[0].Items) != 0 {
+		t.Errorf("Expected 0 items, got %d", len(plan.Steps[0].Items))
+	}
+}
