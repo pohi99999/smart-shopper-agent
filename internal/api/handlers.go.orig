@@ -50,12 +50,6 @@ type OptimizeResponse struct {
 }
 
 func getPricesFilePath() string {
-	filePath := "internal/data/prices.json"
-	if _, err := os.Stat(filePath); err != nil {
-		if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
-			filePath = "../../internal/data/prices.json"
-		}
-	}
 	return filePath
 }
 
