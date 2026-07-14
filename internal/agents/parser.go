@@ -83,7 +83,8 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 	}
 
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout:   10 * time.Second,
+		Transport: http.DefaultTransport,
 	}
 
 	apiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
