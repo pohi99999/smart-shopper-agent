@@ -25,10 +25,12 @@ type RouteResponse struct {
 
 type RoutePlanner struct {
 	client *http.Client
+	baseURL string
 }
 
 func NewRoutePlanner() *RoutePlanner {
 	return &RoutePlanner{
+		baseURL: "https://router.project-osrm.org",
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -44,7 +46,8 @@ type OSRMResponse struct {
 }
 
 func (rp *RoutePlanner) CalculateRoute(req RouteRequest) (RouteResponse, error) {
-	url := fmt.Sprintf("https://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=false",
+	url := fmt.Sprintf("%s/route/v1/driving/%f,%f;%f,%f?overview=false",
+		rp.baseURL,
 		req.Source.Longitude, req.Source.Latitude,
 		req.Destination.Longitude, req.Destination.Latitude)
 
