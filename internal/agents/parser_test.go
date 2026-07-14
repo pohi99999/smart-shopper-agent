@@ -1,9 +1,22 @@
 package agents
 
 import (
+	"bytes"
+	"io"
+	"net/http"
 	"os"
 	"testing"
 )
+
+type RoundTripFunc func(req *http.Request) *http.Response
+
+func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req), nil
+}
+
+func NewTestClient(fn RoundTripFunc) *http.Client {
+	return &http.Client{Transport: RoundTripFunc(fn)}
+}
 
 func TestParser_Parse_MissingKey(t *testing.T) {
 	originalAPIKey := os.Getenv("GEMINI_API_KEY")
@@ -34,5 +47,39 @@ func TestParser_Parse_Live_Error(t *testing.T) {
 	_, err := parser.Parse("veszek valamit")
 	if err == nil {
 		t.Fatalf("Expected an error due to invalid API key, got nil")
+	}
+}
+
+func TestParser_Parse_Success(t *testing.T) {
+	originalAPIKey := os.Getenv("GEMINI_API_KEY")
+	os.Setenv("GEMINI_API_KEY", "test_mock_api_key")
+	defer os.Setenv("GEMINI_API_KEY", originalAPIKey)
+
+	mockResponseJSON := `{"candidates":[{"content":{"parts":[{"text":"{\"items\": [{\"name\": \"milk\", \"quantity\": 1}]}"}]}}]}`
+
+	mockClient := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString(mockResponseJSON)),
+			Header:     make(http.Header),
+		}
+	})
+
+	parser := NewParser()
+	parser.Client = mockClient
+
+	result, err := parser.Parse("buy 1 milk")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(result.Items) != 1 {
+		t.Fatalf("Expected 1 item, got %d", len(result.Items))
+	}
+	if result.Items[0].Name != "milk" {
+		t.Errorf("Expected item name 'milk', got %s", result.Items[0].Name)
+	}
+	if result.Items[0].Quantity != 1 {
+		t.Errorf("Expected item quantity 1, got %d", result.Items[0].Quantity)
 	}
 }
