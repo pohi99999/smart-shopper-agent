@@ -44,7 +44,7 @@ type OSRMResponse struct {
 }
 
 func (rp *RoutePlanner) CalculateRoute(req RouteRequest) (RouteResponse, error) {
-	url := fmt.Sprintf("http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=false",
+	url := fmt.Sprintf("https://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=false",
 		req.Source.Longitude, req.Source.Latitude,
 		req.Destination.Longitude, req.Destination.Latitude)
 
