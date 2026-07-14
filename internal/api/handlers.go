@@ -136,20 +136,28 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// This is a stub implementation. In a real application, you would
-	// fetch the prices from a database or memory.
+	filePath := "internal/data/prices.json"
+	if _, err := os.Stat(filePath); err != nil {
+		if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
+			filePath = "../../internal/data/prices.json"
+		}
+	}
+
+	bodyBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		SendJSONError(w, "Failed to read prices file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var data interface{}
+	if err := json.Unmarshal(bodyBytes, &data); err != nil {
+		SendJSONError(w, "Failed to parse prices data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	prices := map[string]interface{}{
 		"status": "success",
-		"data": map[string]map[string]float64{
-			"Aldi": {
-				"tej":    300,
-				"kenyer": 400,
-			},
-			"Interspar": {
-				"tej":    350,
-				"kenyer": 380,
-			},
-		},
+		"data":   data,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
