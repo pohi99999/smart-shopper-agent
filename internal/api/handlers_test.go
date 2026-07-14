@@ -22,7 +22,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req.Header.Set("X-Admin-Token", "some-token")
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesGetHandler(rec, req)
 
 		if rec.Code != http.StatusInternalServerError {
 			t.Errorf("Expected 500 Internal Server Error, got %d", rec.Code)
@@ -37,7 +37,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesGetHandler(rec, req)
 
 		if rec.Code != http.StatusUnauthorized {
 			t.Errorf("Expected 401 Unauthorized, got %d", rec.Code)
@@ -62,7 +62,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req.Header.Set("X-Admin-Token", "invalid-token")
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesGetHandler(rec, req)
 
 		if rec.Code != http.StatusUnauthorized {
 			t.Errorf("Expected 401 Unauthorized, got %d", rec.Code)
@@ -78,7 +78,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesGetHandler(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("Expected 200 OK, got %d", rec.Code)
@@ -91,22 +91,6 @@ func TestAdminPricesHandler(t *testing.T) {
 
 		if resp["status"] != "success" {
 			t.Errorf("Expected status 'success', got %v", resp["status"])
-		}
-	})
-
-	t.Run("Invalid Method", func(t *testing.T) {
-		originalToken := os.Getenv("ADMIN_TOKEN")
-		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
-		defer os.Setenv("ADMIN_TOKEN", originalToken)
-
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/admin/prices", nil)
-		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
-		rec := httptest.NewRecorder()
-
-		handler.AdminPricesHandler(rec, req)
-
-		if rec.Code != http.StatusMethodNotAllowed {
-			t.Errorf("Expected 405 Method Not Allowed, got %d", rec.Code)
 		}
 	})
 
@@ -148,7 +132,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req.Header.Set("X-Admin-Token", "test-token-123")
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesPostHandler(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("Expected 200 OK, got %d. Body: %s", rec.Code, rec.Body.String())
@@ -176,7 +160,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req.Header.Set("X-Admin-Token", "wrong-token")
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesPostHandler(rec, req)
 
 		if rec.Code != http.StatusUnauthorized {
 			t.Errorf("Expected 401 Unauthorized, got %d", rec.Code)
@@ -192,7 +176,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		req.Header.Set("X-Admin-Token", "some-token")
 		rec := httptest.NewRecorder()
 
-		handler.AdminPricesHandler(rec, req)
+		handler.AdminPricesPostHandler(rec, req)
 
 		if rec.Code != http.StatusInternalServerError {
 			t.Errorf("Expected 500 Internal Server Error, got %d", rec.Code)

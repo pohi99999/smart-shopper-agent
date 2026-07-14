@@ -48,11 +48,13 @@ func main() {
 	// Both endpoints need security headers, but optimize also needs rate limiting
 
 	optimizeHandler := api.SecurityHeadersMiddleware(api.RateLimitMiddleware(apiHandler.OptimizeHandler))
-	adminPricesHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesHandler)
+	adminPricesGetHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesGetHandler)
+	adminPricesPostHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesPostHandler)
 
 	// 4. Register route
 	http.HandleFunc("/api/v1/optimize", optimizeHandler)
-	http.HandleFunc("/api/v1/admin/prices", adminPricesHandler)
+	http.HandleFunc("GET /api/v1/admin/prices", adminPricesGetHandler)
+	http.HandleFunc("POST /api/v1/admin/prices", adminPricesPostHandler)
 
 	// Register Swagger route
 	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
