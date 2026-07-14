@@ -316,3 +316,22 @@ A 27. fázis során beolvasztásra és integrálásra kerültek a `main` ágba J
 ### Tesztek futtatása
 - A backend oldali tesztek (`go test ./...`) hibátlanul zöldek.
 - A React Native frontend oldali tesztek (`npm test` a `mobile` könyvtárban) hibátlanul lefutottak: **6/6 PASS, 16/16 teszt sikeres**.
+
+## 28. Fázis: Jules legutóbbi aszinkron fejlesztéseinek és biztonsági javításainak integrálása (2026-07-14)
+
+A 28. fázis során felderítésre, ellenőrzésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules legújabb aszinkron háttérben végzett fejlesztései, optimalizációi és kritikus biztonsági javításai.
+
+### Beépített Fejlesztések, Optimalizációk és Biztonsági Javítások
+- **N+1 API hívások optimalizációja (Batch Price Fetching):** Bevezetésre került a `PriceScraper.ScrapePrices` metódus a [price_scraper_mcp.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/price_scraper_mcp.go) fájlban, amely lehetővé teszi a termékárak csoportos lekérését. A [pricer.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/pricer.go) fájlban a korábbi ciklikus egyedi árlekérdezés le lett cserélve erre a csoportos lekérdezésre, javítva a teljesítményt. Elkészült a [pricer_benchmark_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/pricer_benchmark_test.go) is a teljesítmény mérésére.
+- **Gemini API kulcs szivárgásának megelőzése:** A [parser.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/parser.go) fájlban a Gemini API-t hívó kérés URL-jéből a lekérdezési paraméterként (`?key=...`) szereplő API kulcs átkerült a biztonságosabb `x-goog-api-key` HTTP fejlécbe (Header), megakadályozva a kulcs esetleges kiszivárgását a hálózati naplókban.
+- **Túlméretes kérések elleni védelem (Unbounded Body Read):** Az adminisztrátori árinjektáló `/admin/prices` POST végponton bevezetésre került a `http.MaxBytesReader` a [handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) fájlban, ami 1 MB-os méretkorlátot kényszerít ki a bejövő kérések törzsére, megelőzve az out-of-memory típusú DoS (Denial of Service) támadásokat.
+- **Biztonságos HTTPS protokoll OSRM kérésekhez:** A [route_planner_mcp.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/route_planner_mcp.go) fájlban az external OSRM API URL címe `http://`-ről a biztonságos `https://` protokollra lett cserélve, így a koordináták és útvonaltervek titkosítva közlekednek a hálózaton, elkerülve a Man-in-the-Middle (MITM) lehallgatásokat.
+- **Timing Attack (időzítéses támadás) elleni védelem:** A [handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) fájlban az `X-Admin-Token` ellenőrzése a `crypto/subtle.ConstantTimeCompare` biztonságos metódus használatára lett átírva a korábbi plain szöveges összehasonlítás helyett, teljesen kiküszöbölve az időzítéses támadások kockázatát.
+- **Adminisztrátori API Handler refaktorálás:** Az `AdminPricesHandler` ketté lett választva [handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go)-ban: létrejött külön az `AdminPricesGetHandler` és `AdminPricesPostHandler`, amelyek a `cmd/app/main.go`-ban külön végpontként lettek beregisztrálva, javítva a kód olvashatóságát és a Swagger dokumentáció pontosságát.
+- **Optimizer él-esetek tesztelése:** Az [optimizer_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/optimizer_test.go) fájl kiegészült a `TestOptimizer_EmptyPrices` és `TestOptimizer_EmptyItems` tesztekkel, amelyek az üres áradatok és üres bevásárlólisták szél-eseteinek hibatűrését ellenőrzik.
+
+### Tesztek és Verifikáció
+- A Go backend tesztek (`go test ./...`) hibátlanul lefutottak a teljes beolvasztás után is.
+- A mobil frontend tesztek (`npm test` a `mobile` könyvtárban) mind a 6 tesztcsomagra sikeresen lefutottak (**6/6 PASS, 16/16 teszt sikeres**).
+- A teljes main ág sikeresen szinkronizálásra került a távoli GitHub tárolóval.
+

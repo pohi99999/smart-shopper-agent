@@ -45,3 +45,7 @@ Bejegyzés: 26. Fázis sikeresen befejezve: react-native-purchases (RevenueCat S
 
 Dátum: 2026-07-10 12:20
 Bejegyzés: 27. Fázis sikeresen befejezve: Jules legújabb aszinkron fejlesztései, javításai és kódminőségi egységtesztjei beolvasztásra és integrálásra kerültek a main ágba (PriceScraper tesztek, Pricer él-eset teszt, Optimizer szelet-allokáció optimalizálás, biztonságos és dinamikus admin token kezelés, robusztus CORS default, rate limiter GC, JSON hiba tesztek). Minden teszt (backend: go test és frontend: npm test) sikeresen lefutott (16/16 PASS). Helyi main ág szinkronizálva a távoli GitHub repóval.
+
+Dátum: 2026-07-14 10:26
+Bejegyzés: 28. Fázis sikeresen befejezve: Jules legújabb aszinkron fejlesztései és biztonsági javításai beolvasztásra és integrálásra kerültek a main ágba (csoportos árlekérdezés /batch price fetching/ és Pricer benchmark teszt, Gemini API kulcs elrejtése a query paraméterekből és áthelyezése a Header-be, MaxBytesReader a túlméretes POST kérések és DoS támadások ellen, secure https protokoll OSRM kérésekhez a MITM támadások kivédésére, subtle ConstantTimeCompare az admin token timing attack támadások elleni védelmére, Admin Prices API Handler szétválasztása GET és POST részre, Optimizer üres árak és üres listák edge case tesztelése). Minden teszt (backend: go test és frontend: npm test) sikeresen lefutott (16/16 PASS). Helyi main ág szinkronizálva a távoli GitHub repóval.
+
