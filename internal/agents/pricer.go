@@ -5,6 +5,8 @@ import (
 	"smart-shopper-agent/internal/models"
 )
 
+const fallbackPrice = 299.0
+
 type Pricer struct {
 	scraper *mcp.PriceScraper
 }
@@ -35,9 +37,11 @@ func (pr *Pricer) GetPrices(list models.ShoppingList) (map[string]float64, error
 
 		var total float64
 		for i, resp := range respBatch {
-			if resp.Available {
-				total += resp.Price * float64(list.Items[i].Quantity)
+			price := resp.Price
+			if !resp.Available {
+				price = fallbackPrice
 			}
+			total += price * float64(list.Items[i].Quantity)
 		}
 		totals[chain] = total
 	}

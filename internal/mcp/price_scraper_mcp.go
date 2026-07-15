@@ -48,7 +48,7 @@ func NewPriceScraper() *PriceScraper {
 }
 
 func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
-	price := 299.0
+	price := 0.0
 	available := false
 
 	if shopData, exists := ps.shops[req.ShopChain]; exists {
@@ -56,12 +56,6 @@ func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
 			price = p
 			available = true
 		}
-	}
-
-	// Ha nem találtuk meg a terméket vagy a boltot, alapértelmezett árral térünk vissza a leírás alapján
-	if !available {
-		price = 299.0
-		available = true
 	}
 
 	return PriceResponse{
@@ -77,7 +71,7 @@ func (ps *PriceScraper) ScrapePrices(req PriceBatchRequest) ([]PriceResponse, er
 	shopData, shopExists := ps.shops[req.ShopChain]
 
 	for i, name := range req.ProductNames {
-		price := 299.0
+		price := 0.0
 		available := false
 
 		if shopExists {
@@ -85,11 +79,6 @@ func (ps *PriceScraper) ScrapePrices(req PriceBatchRequest) ([]PriceResponse, er
 				price = p
 				available = true
 			}
-		}
-
-		if !available {
-			price = 299.0
-			available = true
 		}
 
 		responses[i] = PriceResponse{

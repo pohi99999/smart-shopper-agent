@@ -63,8 +63,8 @@ func TestScrapePrice(t *testing.T) {
 			expected: PriceResponse{
 				ProductName: "kenyer",
 				ShopChain:   "Spar",
-				Price:       299.0,
-				Available:   true,
+				Price:       0.0,
+				Available:   false,
 			},
 		},
 		{
@@ -76,8 +76,8 @@ func TestScrapePrice(t *testing.T) {
 			expected: PriceResponse{
 				ProductName: "tej",
 				ShopChain:   "Tesco",
-				Price:       299.0,
-				Available:   true,
+				Price:       0.0,
+				Available:   false,
 			},
 		},
 	}
