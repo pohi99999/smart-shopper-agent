@@ -116,7 +116,10 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 
 	client := p.Client
 	if client == nil {
-		client = &http.Client{Timeout: 10 * time.Second}
+		client = &http.Client{
+			Timeout:   10 * time.Second,
+			Transport: http.DefaultTransport,
+		}
 	}
 
 	apiURL := p.APIURL
