@@ -14,21 +14,13 @@ import (
 	_ "smart-shopper-agent/docs"
 )
 
-// @title Smart Shopper Agent API
-// @version 1.0
-// @description Backend API for the Smart Shopper Agent project.
-// @host localhost:8080
-// @BasePath /api/v1
-func main() {
-	// Configure JSON logger
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+var (
+	startServer = http.ListenAndServe
+	osExit      = os.Exit
+)
 
-	slog.Info("Smart Shopper Agent API server is starting...")
-
-	if err := godotenv.Load(); err != nil {
-		slog.Warn("No .env file found or error loading it", "error", err)
-	}
+func setupMux() *http.ServeMux {
+	mux := http.NewServeMux()
 
 	// 1. Initialize MCP tools
 	scraper := mcp.NewPriceScraper()
@@ -52,18 +44,39 @@ func main() {
 	adminPricesPostHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesPostHandler)
 
 	// 4. Register route
-	http.HandleFunc("/api/v1/optimize", optimizeHandler)
-	http.HandleFunc("GET /api/v1/admin/prices", adminPricesGetHandler)
-	http.HandleFunc("POST /api/v1/admin/prices", adminPricesPostHandler)
+	mux.HandleFunc("/api/v1/optimize", optimizeHandler)
+	mux.HandleFunc("GET /api/v1/admin/prices", adminPricesGetHandler)
+	mux.HandleFunc("POST /api/v1/admin/prices", adminPricesPostHandler)
 
 	// Register Swagger route
-	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
+	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
+
+	return mux
+}
+
+// @title Smart Shopper Agent API
+// @version 1.0
+// @description Backend API for the Smart Shopper Agent project.
+// @host localhost:8080
+// @BasePath /api/v1
+func main() {
+	// Configure JSON logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	slog.Info("Smart Shopper Agent API server is starting...")
+
+	if err := godotenv.Load(); err != nil {
+		slog.Warn("No .env file found or error loading it", "error", err)
+	}
+
+	mux := setupMux()
 
 	// 5. Start Server
 	port := ":8080"
 	slog.Info("Server is running", "port", port)
-	if err := http.ListenAndServe(port, nil); err != nil {
+	if err := startServer(port, mux); err != nil {
 		slog.Error("Failed to start server", "error", err)
-		os.Exit(1)
+		osExit(1)
 	}
 }
