@@ -14,11 +14,17 @@ import (
 
 const ParserSystemPrompt = "You are a shopping assistant parser that extracts shopping items and quantities from natural language user input."
 
-type Parser struct{}
+type Parser struct {
+	Client *http.Client
+	APIURL string
+}
 
 func NewParser() *Parser {
 	_ = godotenv.Load()
-	return &Parser{}
+	return &Parser{
+		Client: &http.Client{Timeout: 10 * time.Second},
+		APIURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+	}
 }
 
 type Part struct {
@@ -108,8 +114,15 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 		return models.ShoppingList{}, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	apiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+	client := p.Client
+	if client == nil {
+		client = &http.Client{Timeout: 10 * time.Second}
+	}
+
+	apiURL := p.APIURL
+	if apiURL == "" {
+		apiURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+	}
 
 	var lastErr error
 	maxRetries := 2
