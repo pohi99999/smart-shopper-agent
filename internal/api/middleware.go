@@ -1,8 +1,11 @@
 package api
 
 import (
+	"net"
+
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -65,16 +68,41 @@ func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 
 var limiter = NewRateLimiter(rate.Every(time.Minute/10), 10) // 10 requests per minute
 
+// GetClientIP extracts the real client IP address securely, handling X-Forwarded-For.
+func GetClientIP(r *http.Request) string {
+	ip := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		ip = host
+	}
+
+	forwarded := r.Header.Get("X-Forwarded-For")
+	if forwarded != "" {
+		ips := strings.Split(forwarded, ",")
+		for i := len(ips) - 1; i >= 0; i-- {
+			part := strings.TrimSpace(ips[i])
+			parsed := net.ParseIP(part)
+			if parsed != nil {
+				if parsed.IsPrivate() || parsed.IsLoopback() {
+					continue
+				}
+				return part
+			}
+		}
+		for _, ipStr := range ips {
+			part := strings.TrimSpace(ipStr)
+			parsed := net.ParseIP(part)
+			if parsed != nil {
+				return part
+			}
+		}
+	}
+	return ip
+}
+
 // RateLimitMiddleware applies rate limiting per IP address
 func RateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract IP from RemoteAddr
-		ip := r.RemoteAddr
-		// Could also handle X-Forwarded-For if behind a proxy
-		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-			ip = forwarded
-		}
-
+		ip := GetClientIP(r)
 		limiter := limiter.getLimiter(ip)
 		if !limiter.Allow() {
 			SendJSONError(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)

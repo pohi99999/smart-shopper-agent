@@ -108,6 +108,37 @@ func TestRateLimitMiddleware_ForwardedFor(t *testing.T) {
 	})
 }
 
+func TestGetClientIP(t *testing.T) {
+	tests := []struct {
+		name       string
+		remoteAddr string
+		xff        string
+		expected   string
+	}{
+		{"No X-Forwarded-For", "192.168.1.100:1234", "", "192.168.1.100"},
+		{"No port in RemoteAddr", "192.168.1.100", "", "192.168.1.100"},
+		{"Spoofed + Real IP", "10.0.0.1:1234", "8.8.8.8, 203.0.113.5", "203.0.113.5"},
+		{"All private IPs", "10.0.0.1:1234", "192.168.1.50, 10.0.0.2", "192.168.1.50"},
+		{"Multiple public IPs", "10.0.0.1:1234", "203.0.113.1, 203.0.113.2", "203.0.113.2"},
+		{"Invalid IPs in XFF", "10.0.0.1:1234", "invalid, 203.0.113.1, not-an-ip", "203.0.113.1"},
+		{"Only invalid IPs", "10.0.0.1:1234", "invalid, not-an-ip", "10.0.0.1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.RemoteAddr = tt.remoteAddr
+			if tt.xff != "" {
+				req.Header.Set("X-Forwarded-For", tt.xff)
+			}
+			actual := GetClientIP(req)
+			if actual != tt.expected {
+				t.Errorf("GetClientIP() = %v, want %v", actual, tt.expected)
+			}
+		})
+	}
+}
+
 func TestSecurityHeadersMiddleware(t *testing.T) {
 	// A dummy handler to wrap
 	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
