@@ -155,7 +155,7 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 
 	var data interface{}
 	if err := json.Unmarshal(bodyBytes, &data); err != nil {
-		SendJSONError(w, "Invalid JSON data", http.StatusInternalServerError)
+		SendJSONError(w, "Failed to parse prices data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

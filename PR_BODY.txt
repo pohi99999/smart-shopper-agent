@@ -1,8 +1,4 @@
-🎯 **What:**
-Fixed an insecure HTTP vulnerability in the route planner service that transmitted external API requests in plaintext.
-
-⚠️ **Risk:**
-Using `http://` for external API requests allows for Man-in-the-Middle (MITM) attacks. An attacker could potentially intercept and modify the route requests, seeing the unencrypted location coordinates, or tamper with the routing responses.
-
-🛡️ **Solution:**
-Updated the external API URL for `router.project-osrm.org` to use the secure `https://` protocol instead of `http://`, ensuring that location coordinates and routing responses are encrypted in transit.
+🎯 What: Removed the hardcoded stub price map in `AdminPricesGetHandler` and replaced it with logic to read from `prices.json`.
+💡 Why: Centralizing data sources prevents inconsistencies and allows for easier updates without redeploying code.
+✅ Verification: Confirmed file logic using `sed`, ran `go test ./...` which passes with > 70% coverage, and executed `go vet` and `go fmt`.
+✨ Result: Improved maintainability by dynamically retrieving price data instead of returning static hardcoded maps.
