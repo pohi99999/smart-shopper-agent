@@ -6,18 +6,14 @@ import (
 	"testing"
 )
 
-import "os"
-
 func TestPricer_GetPrices(t *testing.T) {
-	// Change to root dir so internal/data/prices.json can be found
-	os.Chdir("../..")
-	defer os.Chdir("internal/agents")
-	// mcp.PriceScraper uses the real internal/data/prices.json if available,
-	// or falls back to a 299.0 default. Let's test the fallback/general behavior
-	// using the actual scraper struct (as it doesn't do real external network calls
-	// currently, just local file reads).
-
 	scraper := mcp.NewPriceScraper()
+	// Inject test data directly to avoid os.Chdir
+	scraper.SetShopsForTesting(map[string]mcp.ShopData{
+		"Aldi":      {},
+		"Interspar": {},
+	})
+
 	pricer := NewPricer(scraper)
 
 	list := models.ShoppingList{
@@ -52,6 +48,12 @@ func TestPricer_GetPrices(t *testing.T) {
 
 func TestPricer_GetPrices_EmptyList(t *testing.T) {
 	scraper := mcp.NewPriceScraper()
+	// Inject test data directly
+	scraper.SetShopsForTesting(map[string]mcp.ShopData{
+		"Aldi":      {},
+		"Interspar": {},
+	})
+
 	pricer := NewPricer(scraper)
 
 	list := models.ShoppingList{

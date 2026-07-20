@@ -166,3 +166,30 @@ func TestScrapePrices(t *testing.T) {
 		})
 	}
 }
+
+func TestGetShopChains(t *testing.T) {
+	ps := &PriceScraper{
+		shops: map[string]ShopData{
+			"Aldi":      {},
+			"Interspar": {},
+			"Tesco":     {},
+		},
+	}
+
+	chains := ps.GetShopChains()
+	if len(chains) != 3 {
+		t.Errorf("expected 3 chains, got %d", len(chains))
+	}
+
+	found := map[string]bool{}
+	for _, c := range chains {
+		found[c] = true
+	}
+
+	expected := []string{"Aldi", "Interspar", "Tesco"}
+	for _, e := range expected {
+		if !found[e] {
+			t.Errorf("expected to find chain %s", e)
+		}
+	}
+}

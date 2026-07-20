@@ -76,3 +76,16 @@ func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error
 
 	return shopData.Coordinates, nil
 }
+
+func (ps *PriceScraper) GetShopChains() []string {
+	chains := make([]string, 0, len(ps.shops))
+	for chain := range ps.shops {
+		chains = append(chains, chain)
+	}
+	return chains
+}
+
+// SetShopsForTesting allows injecting shop data for testing purposes.
+func (ps *PriceScraper) SetShopsForTesting(shops map[string]ShopData) {
+	ps.shops = shops
+}
