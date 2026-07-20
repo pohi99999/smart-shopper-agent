@@ -63,3 +63,106 @@ func TestGetShopCoordinates(t *testing.T) {
 		})
 	}
 }
+
+func TestScrapePrices(t *testing.T) {
+	ps := &PriceScraper{
+		shops: map[string]ShopData{
+			"Spar": {
+				Coordinates: Coordinates{Latitude: 47.0, Longitude: 19.0},
+				Prices: map[string]float64{
+					"tej": 349.0,
+					"viz": 150.0,
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name     string
+		req      PriceBatchRequest
+		expected []PriceResponse
+	}{
+		{
+			name: "All products and shop exist",
+			req: PriceBatchRequest{
+				ShopChain:    "Spar",
+				ProductNames: []string{"tej", "viz"},
+			},
+			expected: []PriceResponse{
+				{
+					ProductName: "tej",
+					ShopChain:   "Spar",
+					Price:       349.0,
+					Available:   true,
+				},
+				{
+					ProductName: "viz",
+					ShopChain:   "Spar",
+					Price:       150.0,
+					Available:   true,
+				},
+			},
+		},
+		{
+			name: "Shop exists but some products do not",
+			req: PriceBatchRequest{
+				ShopChain:    "Spar",
+				ProductNames: []string{"tej", "kenyer"},
+			},
+			expected: []PriceResponse{
+				{
+					ProductName: "tej",
+					ShopChain:   "Spar",
+					Price:       349.0,
+					Available:   true,
+				},
+				{
+					ProductName: "kenyer",
+					ShopChain:   "Spar",
+					Price:       0.0,
+					Available:   false,
+				},
+			},
+		},
+		{
+			name: "Shop does not exist",
+			req: PriceBatchRequest{
+				ShopChain:    "Tesco",
+				ProductNames: []string{"tej", "viz"},
+			},
+			expected: []PriceResponse{
+				{
+					ProductName: "tej",
+					ShopChain:   "Tesco",
+					Price:       0.0,
+					Available:   false,
+				},
+				{
+					ProductName: "viz",
+					ShopChain:   "Tesco",
+					Price:       0.0,
+					Available:   false,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := ps.ScrapePrices(tt.req)
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+
+			if len(res) != len(tt.expected) {
+				t.Fatalf("expected %d results, got %d", len(tt.expected), len(res))
+			}
+
+			for i := range res {
+				if res[i] != tt.expected[i] {
+					t.Errorf("at index %d: expected %+v, got %+v", i, tt.expected[i], res[i])
+				}
+			}
+		})
+	}
+}
