@@ -68,11 +68,81 @@ func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 
 var limiter = NewRateLimiter(rate.Every(time.Minute/10), 10) // 10 requests per minute
 
+var (
+	trustedProxiesCache []*net.IPNet
+	trustedProxiesMu    sync.RWMutex
+)
+
+func init() {
+	LoadTrustedProxies()
+}
+
+// LoadTrustedProxies reads the TRUSTED_PROXIES environment variable and updates the internal cache.
+func LoadTrustedProxies() {
+	trustedProxiesEnv := os.Getenv("TRUSTED_PROXIES")
+	var newCache []*net.IPNet
+
+	if trustedProxiesEnv != "" {
+		proxies := strings.Split(trustedProxiesEnv, ",")
+		for _, proxy := range proxies {
+			proxy = strings.TrimSpace(proxy)
+			if proxy == "" {
+				continue
+			}
+
+			if strings.Contains(proxy, "/") {
+				_, ipNet, err := net.ParseCIDR(proxy)
+				if err == nil {
+					newCache = append(newCache, ipNet)
+				}
+			} else {
+				trustedIP := net.ParseIP(proxy)
+				if trustedIP != nil {
+					// Convert single IP to a /32 or /128 CIDR network for uniform matching
+					var mask net.IPMask
+					if trustedIP.To4() != nil {
+						mask = net.CIDRMask(32, 32)
+					} else {
+						mask = net.CIDRMask(128, 128)
+					}
+					ipNet := &net.IPNet{IP: trustedIP, Mask: mask}
+					newCache = append(newCache, ipNet)
+				}
+			}
+		}
+	}
+
+	trustedProxiesMu.Lock()
+	trustedProxiesCache = newCache
+	trustedProxiesMu.Unlock()
+}
+
+func isTrustedProxy(ip string) bool {
+	clientIP := net.ParseIP(ip)
+	if clientIP == nil {
+		return false
+	}
+
+	trustedProxiesMu.RLock()
+	defer trustedProxiesMu.RUnlock()
+
+	for _, ipNet := range trustedProxiesCache {
+		if ipNet.Contains(clientIP) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetClientIP extracts the real client IP address securely, handling X-Forwarded-For.
 func GetClientIP(r *http.Request) string {
 	ip := r.RemoteAddr
 	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 		ip = host
+	}
+
+	if !isTrustedProxy(ip) {
+		return ip
 	}
 
 	forwarded := r.Header.Get("X-Forwarded-For")

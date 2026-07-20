@@ -76,6 +76,14 @@ func TestRateLimitMiddleware_ForwardedFor(t *testing.T) {
 		limiter = originalLimiter
 	}()
 
+	originalProxies := os.Getenv("TRUSTED_PROXIES")
+	os.Setenv("TRUSTED_PROXIES", "192.168.1.1, 192.168.1.2")
+	LoadTrustedProxies()
+	defer func() {
+		os.Setenv("TRUSTED_PROXIES", originalProxies)
+		LoadTrustedProxies()
+	}()
+
 	// Reset the global limiter for testing
 	limiter = NewRateLimiter(rate.Every(time.Minute/10), 1) // Allow max 1 burst
 
@@ -109,6 +117,14 @@ func TestRateLimitMiddleware_ForwardedFor(t *testing.T) {
 }
 
 func TestGetClientIP(t *testing.T) {
+	originalProxies := os.Getenv("TRUSTED_PROXIES")
+	os.Setenv("TRUSTED_PROXIES", "10.0.0.1, 192.168.1.100")
+	LoadTrustedProxies()
+	defer func() {
+		os.Setenv("TRUSTED_PROXIES", originalProxies)
+		LoadTrustedProxies()
+	}()
+
 	tests := []struct {
 		name       string
 		remoteAddr string
@@ -122,6 +138,7 @@ func TestGetClientIP(t *testing.T) {
 		{"Multiple public IPs", "10.0.0.1:1234", "203.0.113.1, 203.0.113.2", "203.0.113.2"},
 		{"Invalid IPs in XFF", "10.0.0.1:1234", "invalid, 203.0.113.1, not-an-ip", "203.0.113.1"},
 		{"Only invalid IPs", "10.0.0.1:1234", "invalid, not-an-ip", "10.0.0.1"},
+		{"Untrusted Proxy", "10.0.0.2:1234", "8.8.8.8", "10.0.0.2"},
 	}
 
 	for _, tt := range tests {
