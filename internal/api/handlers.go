@@ -14,16 +14,18 @@ import (
 )
 
 type APIHandler struct {
-	parser    *agents.Parser
-	pricer    *agents.Pricer
-	optimizer *agents.Optimizer
+	parser     *agents.Parser
+	pricer     *agents.Pricer
+	optimizer  *agents.Optimizer
+	adminToken string
 }
 
 func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agents.Optimizer) *APIHandler {
 	return &APIHandler{
-		parser:    parser,
-		pricer:    pricer,
-		optimizer: optimizer,
+		parser:     parser,
+		pricer:     pricer,
+		optimizer:  optimizer,
+		adminToken: os.Getenv("ADMIN_TOKEN"),
 	}
 }
 
@@ -144,14 +146,13 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [get]
 func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Request) {
-	adminToken := os.Getenv("ADMIN_TOKEN")
-	if adminToken == "" {
+	if h.adminToken == "" {
 		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	expectedTokenHash := sha256.Sum256([]byte(adminToken))
+	expectedTokenHash := sha256.Sum256([]byte(h.adminToken))
 	providedTokenHash := sha256.Sum256([]byte(token))
 
 	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
@@ -197,14 +198,13 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [post]
 func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Request) {
-	adminToken := os.Getenv("ADMIN_TOKEN")
-	if adminToken == "" {
+	if h.adminToken == "" {
 		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	expectedTokenHash := sha256.Sum256([]byte(adminToken))
+	expectedTokenHash := sha256.Sum256([]byte(h.adminToken))
 	providedTokenHash := sha256.Sum256([]byte(token))
 
 	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
