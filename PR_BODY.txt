@@ -1,4 +1,0 @@
-🎯 What: Removed the hardcoded stub price map in `AdminPricesGetHandler` and replaced it with logic to read from `prices.json`.
-💡 Why: Centralizing data sources prevents inconsistencies and allows for easier updates without redeploying code.
-✅ Verification: Confirmed file logic using `sed`, ran `go test ./...` which passes with > 70% coverage, and executed `go vet` and `go fmt`.
-✨ Result: Improved maintainability by dynamically retrieving price data instead of returning static hardcoded maps.
