@@ -24,7 +24,7 @@ type RouteResponse struct {
 }
 
 type RoutePlanner struct {
-	client *http.Client
+	client  *http.Client
 	baseURL string
 }
 
