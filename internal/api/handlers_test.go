@@ -12,11 +12,12 @@ import (
 )
 
 func TestAdminPricesHandler(t *testing.T) {
-	handler := NewAPIHandler(nil, nil, nil)
 	t.Run("GET Server Configuration Error", func(t *testing.T) {
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		handler := NewAPIHandler(nil, nil, nil)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "some-token")
@@ -33,6 +34,8 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		handler := NewAPIHandler(nil, nil, nil)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		rec := httptest.NewRecorder()
@@ -58,6 +61,8 @@ func TestAdminPricesHandler(t *testing.T) {
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
 
+		handler := NewAPIHandler(nil, nil, nil)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "invalid-token")
 		rec := httptest.NewRecorder()
@@ -73,6 +78,8 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		handler := NewAPIHandler(nil, nil, nil)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/prices", nil)
 		req.Header.Set("X-Admin-Token", "secret-admin-token-123")
@@ -115,6 +122,8 @@ func TestAdminPricesHandler(t *testing.T) {
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
 
+		handler := NewAPIHandler(nil, nil, nil)
+
 		newPrices := map[string]interface{}{
 			"TestShop": map[string]interface{}{
 				"coordinates": map[string]float64{
@@ -156,6 +165,8 @@ func TestAdminPricesHandler(t *testing.T) {
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
 
+		handler := NewAPIHandler(nil, nil, nil)
+
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", bytes.NewBuffer([]byte(`{}`)))
 		req.Header.Set("X-Admin-Token", "wrong-token")
 		rec := httptest.NewRecorder()
@@ -171,6 +182,8 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		handler := NewAPIHandler(nil, nil, nil)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", bytes.NewBuffer([]byte(`{}`)))
 		req.Header.Set("X-Admin-Token", "some-token")
