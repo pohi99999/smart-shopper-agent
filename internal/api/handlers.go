@@ -58,6 +58,11 @@ var (
 	pricesFilePathOnce sync.Once
 )
 
+func resetPricesFilePathCacheForTesting() {
+	pricesFilePath = ""
+	pricesFilePathOnce = sync.Once{}
+}
+
 func getPricesFilePath() string {
 	pricesFilePathOnce.Do(func() {
 		filePath := "internal/data/prices.json"

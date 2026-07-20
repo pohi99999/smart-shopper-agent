@@ -346,10 +346,12 @@ func TestGetPricesFilePath(t *testing.T) {
 	}()
 
 	t.Run("File exists in current directory (internal/data/prices.json)", func(t *testing.T) {
+		resetPricesFilePathCacheForTesting()
 		tempDir := t.TempDir()
 		if err := os.Chdir(tempDir); err != nil {
 			t.Fatalf("Failed to change working directory: %v", err)
 		}
+		defer os.Chdir(originalWD)
 
 		dataDir := "internal/data"
 		if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -369,6 +371,7 @@ func TestGetPricesFilePath(t *testing.T) {
 	})
 
 	t.Run("File exists in parent directory (../../internal/data/prices.json)", func(t *testing.T) {
+		resetPricesFilePathCacheForTesting()
 		tempDir := t.TempDir()
 
 		// Create the target file structure
@@ -391,6 +394,7 @@ func TestGetPricesFilePath(t *testing.T) {
 		if err := os.Chdir(apiDir); err != nil {
 			t.Fatalf("Failed to change working directory: %v", err)
 		}
+		defer os.Chdir(originalWD)
 
 		got := getPricesFilePath()
 		expected := "../../internal/data/prices.json"
@@ -400,10 +404,12 @@ func TestGetPricesFilePath(t *testing.T) {
 	})
 
 	t.Run("File does not exist (fallback to default)", func(t *testing.T) {
+		resetPricesFilePathCacheForTesting()
 		tempDir := t.TempDir()
 		if err := os.Chdir(tempDir); err != nil {
 			t.Fatalf("Failed to change working directory: %v", err)
 		}
+		defer os.Chdir(originalWD)
 
 		got := getPricesFilePath()
 		expected := "internal/data/prices.json"
