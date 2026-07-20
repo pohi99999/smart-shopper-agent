@@ -348,8 +348,24 @@ A 28. fázis fejlesztései és a három különálló fejlesztési ág sikeresen
 - **Frontend Képernyő Refaktorálás** (`origin/refactor/shopping-list-screen-8814833837130808610`): A `ShoppingListScreen.tsx` óriáskomponens felbontása moduláris és jól tesztelhető komponensekre ([Header.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/components/Header.tsx), [InputSection.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/components/InputSection.tsx), [MapSection.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/components/MapSection.tsx), [ResultSection.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/components/ResultSection.tsx)), miközben a teljes i18n lokalizáció, Deep Linking, Sentry hibakövetés és a RevenueCat előfizetési / prémium paywall funkcionalitás érintetlen maradt.
 - **Backend Main Tesztelés és Refaktor** (`origin/test-improvement-main-go-9927234444171865960`): A [main.go](file:///Z:/001_Workspace/smart-shopper-agent/cmd/app/main.go) fájl tesztelhetőbbé tétele és a [main_test.go](file:///Z:/001_Workspace/smart-shopper-agent/cmd/app/main_test.go) egységtesztek megírása (lefedve a sikeres szerverindítást és a hallgatózási port hibákat).
 
-### Tesztek és Verifikáció
-- A Go backend tesztek (`go test -v ./...`) hibátlanul lefutottak a beolvasztás után, immár a `cmd/app` tesztekkel együtt (**PASS**).
-- A mobil frontend tesztek (`npm test` a `mobile` könyvtárban) mind a 6 tesztcsomagra sikeresen lefutottak (**6/6 PASS, 16/16 teszt sikeres**).
-- A teljes szinkronizált `main` ág sikeresen feltöltésre (push) került a GitHub távoli repozitóriumba.
-- Az ideiglenes lokális tesztágak (`temp-jules-fix`, `temp-refactor`, `temp-test-improvement`) sikeresen eltávolításra kerültek.
+### Harmadik szakasz (2026-07-20): Jules Aszinkron Fejlesztéseinek és Optimalizációinak Teljes Integrációja
+
+A 2026-07-20-i integrációs mérföldkő során Jules 16 távoli háttérágának fejlesztései, tesztjei és optimalizációi kerültek átvizsgálásra, tesztelésre és biztonságos beolvasztásra a `main` ágba:
+- **Kód-egészség és elavult kód eltávolítása:** Eltávolításra került az elavult, nem használt `ScrapePrice` metódus és annak tesztjei a `PriceScraper` MCP eszközből a csoportos `ScrapePrices` javára (`fix-unused-scrapeprice-9906620117550275550`).
+- **Dinamikus boltlánc lekérdezés:** A `Pricer` ügynökből eltávolításra kerültek a beégetett boltlánc nevek, helyettük a `PriceScraper.GetShopChains()` metódussal dinamikusan kérdezi le az elérhető üzleteket (`jules-12667274287531627051-ab7f5634`).
+- **Admin token biztonság & Timing Attack elleni védelem:** Az `X-Admin-Token` ellenőrzése SHA-256 hash összehasonlításra váltott (`crypto/subtle.ConstantTimeCompare`), valamint az `ADMIN_TOKEN` környezeti változó értéke eltárolásra és gyorsítótárazásra kerül az `APIHandler` struktúrában az `os.Getenv` hívások minimalizálásáért (`jules-sec-fix-admin-token-hash-11853048018224043621`, `perf/optimize-admin-token-read-8347807724384036114`, `fix/auth-token-cleanup-9646431544478370160`).
+- **IP Spoofing & Rate Limit védelem:** Bevezetésre került a `TRUSTED_PROXIES` környezeti változó támogatása a `GetClientIP` middleware-ben, megelőzve az `X-Forwarded-For` fejléc hamisításával (spoofing) történő rate limit kijátszást (`security/fix-x-forwarded-for-spoofing-4088424802785433085`).
+- **Fájlútvonal és middleware gyorsítótárazás:** A `prices.json` adatbázis fájl elérési útjának felderítése `sync.Once` segítségével gyorsítótárazásra került, csökkentve az `os.Stat` rendszerhívások számát, valamint optimálásra került a `SecurityHeadersMiddleware` fejléc-keresése (`performance-optimization-cache-filepath-2072694416436573039`, `perf-optimize-security-headers-middleware-13029542035617367476`).
+- **Környezeti változók egyszeri betöltése:** A `.env` konfigurációs fájl betöltése központosításra került a `main.go`-ban szerver indításkor, eltávolítva a felesleges, kérésenkénti `godotenv.Load()` hívásokat (`jules-perf-env-load-3914449657845478566`, `jules-972724407394135276-40569913`).
+- **Tesztlefedettség bővítése:**
+  - `ScrapePrices` tesztelése hiányzó boltok esetére (`fix/test-scrape-prices-missing-shop-2519067106294710736`).
+  - `buildRequestBody` segédfüggvény tesztjei a Parserben (`test-build-request-body-741162804664720953`).
+  - `getPricesFilePath` tesztjei az API handlerben (`testing-improve-get-prices-filepath-16071879007762040369`).
+  - API middleware (`SecurityHeadersMiddleware` és `RateLimitMiddleware`) átfogó tesztjei (`jules-3707188537642984577-ab1e1588`).
+- **Függőségi és CI/CD frissítések:** `golang.org/x/net` frissítése 0.38.0 verzióra (`dependabot/go_modules/go_modules-bbb8b02913`), Dockerfile és `.env.example` állományok finomhangolása és mobil CI unit teszt lefedettség bővítése (`feature/jules-async-cicd-and-tests-16574816831841437917`).
+
+### Tesztek és Verifikáció (2026-07-20)
+- A Go backend tesztek (`go test -count=1 -short ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native mobil frontend tesztek (`npm test` a `mobile` könyvtárban) mind a 6 tesztcsomagra sikeresen lefutottak (**6/6 PASS, 16/16 teszt sikeres**).
+- A frissített `main` ág sikeresen szinkronizálva és feltöltésre (push) került a GitHub távoli tárolóba: `https://github.com/pohi99999/smart-shopper-agent.git`.
+
