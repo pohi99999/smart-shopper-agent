@@ -9,6 +9,7 @@ import (
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
+	"sync"
 )
 
 type APIHandler struct {
@@ -49,14 +50,22 @@ type OptimizeResponse struct {
 	TotalCost float64          `json:"total_cost" example:"1250"`
 }
 
+var (
+	pricesFilePath     string
+	pricesFilePathOnce sync.Once
+)
+
 func getPricesFilePath() string {
-	filePath := "internal/data/prices.json"
-	if _, err := os.Stat(filePath); err != nil {
-		if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
-			filePath = "../../internal/data/prices.json"
+	pricesFilePathOnce.Do(func() {
+		filePath := "internal/data/prices.json"
+		if _, err := os.Stat(filePath); err != nil {
+			if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
+				filePath = "../../internal/data/prices.json"
+			}
 		}
-	}
-	return filePath
+		pricesFilePath = filePath
+	})
+	return pricesFilePath
 }
 
 // OptimizeHandler godoc
