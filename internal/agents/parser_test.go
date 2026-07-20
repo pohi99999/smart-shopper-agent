@@ -2,6 +2,7 @@ package agents
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -118,5 +119,48 @@ func TestParser_Parse_BadJSONResponse(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "failed to decode response") {
 		t.Errorf("Expected 'failed to decode response' error, got %v", err)
+	}
+}
+
+func TestBuildRequestBody(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"normal text", "buy 2 apples"},
+		{"empty string", ""},
+		{"special characters", "milk & honey @ $5!"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := buildRequestBody(tt.input)
+			if err != nil {
+				t.Fatalf("buildRequestBody() error = %v", err)
+			}
+
+			var reqBody GeminiRequest
+			if err := json.Unmarshal(result, &reqBody); err != nil {
+				t.Fatalf("failed to unmarshal JSON result: %v", err)
+			}
+
+			if len(reqBody.Contents) != 1 || len(reqBody.Contents[0].Parts) != 1 {
+				t.Fatalf("expected 1 content part")
+			}
+			if reqBody.Contents[0].Parts[0].Text != tt.input {
+				t.Errorf("expected text %q, got %q", tt.input, reqBody.Contents[0].Parts[0].Text)
+			}
+
+			if len(reqBody.SystemInstruction.Parts) != 1 {
+				t.Fatalf("expected 1 system instruction part")
+			}
+			if reqBody.SystemInstruction.Parts[0].Text != ParserSystemPrompt {
+				t.Errorf("expected system prompt %q, got %q", ParserSystemPrompt, reqBody.SystemInstruction.Parts[0].Text)
+			}
+
+			if reqBody.GenerationConfig.ResponseMimeType != "application/json" {
+				t.Errorf("expected response mime type 'application/json', got %q", reqBody.GenerationConfig.ResponseMimeType)
+			}
+		})
 	}
 }
