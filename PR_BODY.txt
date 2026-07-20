@@ -1,5 +1,0 @@
-🎯 **What:** The vulnerability fixed was an Insufficient Rate Limiting IP Identification caused by trusting the `X-Forwarded-For` header indiscriminately. This allowed malicious actors to bypass rate limits by spoofing their IP address via the `X-Forwarded-For` header.
-
-⚠️ **Risk:** By spoofing the `X-Forwarded-For` header, attackers could easily bypass the rate limiting mechanism, potentially resulting in Denial of Service (DoS) attacks, brute-force attacks, or resource exhaustion.
-
-🛡️ **Solution:** Implemented a trusted proxy verification mechanism. The `GetClientIP` function now reads a cached list of trusted proxies or CIDR blocks configured via the `TRUSTED_PROXIES` environment variable. The `X-Forwarded-For` header is only parsed and trusted if the immediate connection (`RemoteAddr`) originates from one of these verified, trusted proxies. Otherwise, it defaults securely to the `RemoteAddr`. The configuration is cached efficiently at startup using a `sync.RWMutex` to ensure thread safety without causing performance regressions under high request loads.
