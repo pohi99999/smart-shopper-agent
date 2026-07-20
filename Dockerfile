@@ -1,5 +1,5 @@
 # First stage: builder
-FROM golang:1.26-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
@@ -16,21 +16,16 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o smart-shopper-agent cmd/app/main.go
 
 # Second stage: production
-FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates
-
-WORKDIR /app
+FROM scratch
 
 # Copy the binary
-COPY --from=builder /app/smart-shopper-agent .
+COPY --from=builder /app/smart-shopper-agent /smart-shopper-agent
 
 # Copy the required assets and config files
-COPY internal/data/prices.json ./internal/data/prices.json
-COPY .env .env
+COPY internal/data/prices.json /internal/data/prices.json
 
 # Expose the application port
 EXPOSE 8080
 
 # Start the application
-CMD ["./smart-shopper-agent"]
+CMD ["/smart-shopper-agent"]

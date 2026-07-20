@@ -36,7 +36,7 @@ func TestRoutePlanner_CalculateRoute(t *testing.T) {
 
 func TestRoutePlanner_ErrorResponses(t *testing.T) {
 	req := RouteRequest{
-		Source: Coordinates{Latitude: 46.84, Longitude: 16.84},
+		Source:      Coordinates{Latitude: 46.84, Longitude: 16.84},
 		Destination: Coordinates{Latitude: 46.85, Longitude: 16.85},
 	}
 

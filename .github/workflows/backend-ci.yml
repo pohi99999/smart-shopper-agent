@@ -28,3 +28,4 @@ jobs:
 
       - name: Build Docker image (verification only)
         run: touch .env && docker build -t smart-shopper-agent:test .
+
