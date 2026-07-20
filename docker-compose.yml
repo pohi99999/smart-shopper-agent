@@ -2,13 +2,10 @@ version: '3.8'
 
 services:
   smart-shopper-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     ports:
       - "8080:8080"
     volumes:
       - ./internal/data/prices.json:/app/internal/data/prices.json
-    env_file:
-      - .env
-    restart: unless-stopped
+    environment:
+      - ADMIN_TOKEN=secret-admin-token-123
