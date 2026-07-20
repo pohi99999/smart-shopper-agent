@@ -1,16 +1,17 @@
 package agents
 
 import (
-	"os"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
 	"testing"
 )
 
 func BenchmarkOptimizer(b *testing.B) {
-	os.Chdir("../..")
-	defer os.Chdir("internal/agents")
 	scraper := mcp.NewPriceScraper()
+	scraper.SetShopsForTesting(map[string]mcp.ShopData{
+		"Aldi":      {Coordinates: mcp.Coordinates{Latitude: 46.8451, Longitude: 16.8455}},
+		"Interspar": {Coordinates: mcp.Coordinates{Latitude: 46.8413, Longitude: 16.8521}},
+	})
 	planner := mcp.NewRoutePlanner()
 	optimizer := NewOptimizer(planner, scraper)
 

@@ -18,7 +18,7 @@ func NewPricer(scraper *mcp.PriceScraper) *Pricer {
 }
 
 func (pr *Pricer) GetPrices(list models.ShoppingList) (map[string]float64, error) {
-	chains := []string{"Aldi", "Interspar"}
+	chains := pr.scraper.GetShopChains()
 	totals := make(map[string]float64)
 
 	productNames := make([]string, len(list.Items))
