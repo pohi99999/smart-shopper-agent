@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
 	"io"
@@ -141,7 +142,10 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	if subtle.ConstantTimeCompare([]byte(token), []byte(adminToken)) != 1 {
+	expectedTokenHash := sha256.Sum256([]byte(adminToken))
+	providedTokenHash := sha256.Sum256([]byte(token))
+
+	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -191,7 +195,10 @@ func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	if subtle.ConstantTimeCompare([]byte(token), []byte(adminToken)) != 1 {
+	expectedTokenHash := sha256.Sum256([]byte(adminToken))
+	providedTokenHash := sha256.Sum256([]byte(token))
+
+	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
