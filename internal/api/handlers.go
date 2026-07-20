@@ -12,16 +12,18 @@ import (
 )
 
 type APIHandler struct {
-	parser    *agents.Parser
-	pricer    *agents.Pricer
-	optimizer *agents.Optimizer
+	parser     *agents.Parser
+	pricer     *agents.Pricer
+	optimizer  *agents.Optimizer
+	adminToken string
 }
 
 func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agents.Optimizer) *APIHandler {
 	return &APIHandler{
-		parser:    parser,
-		pricer:    pricer,
-		optimizer: optimizer,
+		parser:     parser,
+		pricer:     pricer,
+		optimizer:  optimizer,
+		adminToken: os.Getenv("ADMIN_TOKEN"),
 	}
 }
 
@@ -134,14 +136,13 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [get]
 func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Request) {
-	adminToken := os.Getenv("ADMIN_TOKEN")
-	if adminToken == "" {
+	if h.adminToken == "" {
 		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	if subtle.ConstantTimeCompare([]byte(token), []byte(adminToken)) != 1 {
+	if subtle.ConstantTimeCompare([]byte(token), []byte(h.adminToken)) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -184,14 +185,13 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [post]
 func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Request) {
-	adminToken := os.Getenv("ADMIN_TOKEN")
-	if adminToken == "" {
+	if h.adminToken == "" {
 		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	if subtle.ConstantTimeCompare([]byte(token), []byte(adminToken)) != 1 {
+	if subtle.ConstantTimeCompare([]byte(token), []byte(h.adminToken)) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

@@ -115,8 +115,8 @@ func RateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 // SecurityHeadersMiddleware adds basic security HTTP headers to responses
 func SecurityHeadersMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
 	return func(w http.ResponseWriter, r *http.Request) {
-		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
 		if allowedOrigin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
 		}
