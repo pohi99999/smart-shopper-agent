@@ -6,11 +6,6 @@ import (
 	"os"
 )
 
-type PriceRequest struct {
-	ProductName string `json:"product_name"`
-	ShopChain   string `json:"shop_chain"`
-}
-
 type PriceResponse struct {
 	ProductName string  `json:"product_name"`
 	ShopChain   string  `json:"shop_chain"`
@@ -45,25 +40,6 @@ func NewPriceScraper() *PriceScraper {
 	}
 
 	return ps
-}
-
-func (ps *PriceScraper) ScrapePrice(req PriceRequest) (PriceResponse, error) {
-	price := 0.0
-	available := false
-
-	if shopData, exists := ps.shops[req.ShopChain]; exists {
-		if p, found := shopData.Prices[req.ProductName]; found {
-			price = p
-			available = true
-		}
-	}
-
-	return PriceResponse{
-		ProductName: req.ProductName,
-		ShopChain:   req.ShopChain,
-		Price:       price,
-		Available:   available,
-	}, nil
 }
 
 func (ps *PriceScraper) ScrapePrices(req PriceBatchRequest) ([]PriceResponse, error) {
