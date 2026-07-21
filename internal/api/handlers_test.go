@@ -8,6 +8,7 @@ import (
 	"os"
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
+	"smart-shopper-agent/internal/utils"
 	"testing"
 )
 
@@ -102,10 +103,7 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("POST Valid Token and Body", func(t *testing.T) {
-		filePath := "../../internal/data/prices.json"
-		if _, err := os.Stat(filePath); err != nil {
-			filePath = "internal/data/prices.json"
-		}
+		filePath := utils.GetPricesFilePath()
 
 		originalData, err := os.ReadFile(filePath)
 		if err != nil {
@@ -331,90 +329,4 @@ func TestSendJSONError(t *testing.T) {
 	if errResp.Code != expectedStatusCode {
 		t.Errorf("Expected error code %d in JSON body, got %d", expectedStatusCode, errResp.Code)
 	}
-}
-
-func TestGetPricesFilePath(t *testing.T) {
-	// Save the original working directory
-	originalWD, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current working directory: %v", err)
-	}
-	defer func() {
-		if err := os.Chdir(originalWD); err != nil {
-			t.Errorf("Failed to restore original working directory: %v", err)
-		}
-	}()
-
-	t.Run("File exists in current directory (internal/data/prices.json)", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-		tempDir := t.TempDir()
-		if err := os.Chdir(tempDir); err != nil {
-			t.Fatalf("Failed to change working directory: %v", err)
-		}
-		defer os.Chdir(originalWD)
-
-		dataDir := "internal/data"
-		if err := os.MkdirAll(dataDir, 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		filePath := dataDir + "/prices.json"
-		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
-			t.Fatalf("Failed to create test file: %v", err)
-		}
-
-		got := getPricesFilePath()
-		expected := "internal/data/prices.json"
-		if got != expected {
-			t.Errorf("Expected %q, got %q", expected, got)
-		}
-	})
-
-	t.Run("File exists in parent directory (../../internal/data/prices.json)", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-		tempDir := t.TempDir()
-
-		// Create the target file structure
-		dataDir := tempDir + "/internal/data"
-		if err := os.MkdirAll(dataDir, 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		filePath := dataDir + "/prices.json"
-		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
-			t.Fatalf("Failed to create test file: %v", err)
-		}
-
-		// Create and switch to the API directory structure
-		apiDir := tempDir + "/internal/api"
-		if err := os.MkdirAll(apiDir, 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		if err := os.Chdir(apiDir); err != nil {
-			t.Fatalf("Failed to change working directory: %v", err)
-		}
-		defer os.Chdir(originalWD)
-
-		got := getPricesFilePath()
-		expected := "../../internal/data/prices.json"
-		if got != expected {
-			t.Errorf("Expected %q, got %q", expected, got)
-		}
-	})
-
-	t.Run("File does not exist (fallback to default)", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-		tempDir := t.TempDir()
-		if err := os.Chdir(tempDir); err != nil {
-			t.Fatalf("Failed to change working directory: %v", err)
-		}
-		defer os.Chdir(originalWD)
-
-		got := getPricesFilePath()
-		expected := "internal/data/prices.json"
-		if got != expected {
-			t.Errorf("Expected %q, got %q", expected, got)
-		}
-	})
 }

@@ -10,7 +10,7 @@ import (
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
-	"sync"
+	"smart-shopper-agent/internal/utils"
 )
 
 type APIHandler struct {
@@ -51,29 +51,6 @@ type OptimizeRequest struct {
 type OptimizeResponse struct {
 	RoutePlan models.RoutePlan `json:"route_plan"`
 	TotalCost float64          `json:"total_cost" example:"1250"`
-}
-
-var (
-	pricesFilePath     string
-	pricesFilePathOnce sync.Once
-)
-
-func resetPricesFilePathCacheForTesting() {
-	pricesFilePath = ""
-	pricesFilePathOnce = sync.Once{}
-}
-
-func getPricesFilePath() string {
-	pricesFilePathOnce.Do(func() {
-		filePath := "internal/data/prices.json"
-		if _, err := os.Stat(filePath); err != nil {
-			if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
-				filePath = "../../internal/data/prices.json"
-			}
-		}
-		pricesFilePath = filePath
-	})
-	return pricesFilePath
 }
 
 // OptimizeHandler godoc
@@ -165,7 +142,7 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	filePath := getPricesFilePath()
+	filePath := utils.GetPricesFilePath()
 	bodyBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		SendJSONError(w, "Failed to read prices: "+err.Error(), http.StatusInternalServerError)
@@ -230,7 +207,7 @@ func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	filePath := getPricesFilePath()
+	filePath := utils.GetPricesFilePath()
 	if err := os.WriteFile(filePath, bodyBytes, 0644); err != nil {
 		SendJSONError(w, "Failed to save prices: "+err.Error(), http.StatusInternalServerError)
 		return

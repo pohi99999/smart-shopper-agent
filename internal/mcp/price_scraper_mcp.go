@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"smart-shopper-agent/internal/utils"
 )
 
 type PriceResponse struct {
@@ -33,7 +34,7 @@ func NewPriceScraper() *PriceScraper {
 	}
 
 	// Olvassuk be a JSON fájlt egyszer, inicializáláskor
-	data, err := os.ReadFile("internal/data/prices.json")
+	data, err := os.ReadFile(utils.GetPricesFilePath())
 	if err == nil {
 		// Ha nincs hiba, próbáljuk meg parse-olni
 		_ = json.Unmarshal(data, &ps.shops)
