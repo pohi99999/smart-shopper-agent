@@ -12,7 +12,7 @@ func TestOptimizer_Optimize(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping network-bound test in short mode")
 	}
-		// Using the real scraper and planner, but with Zalaegerszeg coordinates
+	// Using the real scraper and planner, but with Zalaegerszeg coordinates
 	// to ensure it passes the <50km check.
 	scraper := mcp.NewPriceScraper()
 	scraper.SetShopsForTesting(map[string]mcp.ShopData{
@@ -62,7 +62,7 @@ func TestOptimizer_DistanceLimit(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping network-bound test in short mode")
 	}
-		scraper := mcp.NewPriceScraper()
+	scraper := mcp.NewPriceScraper()
 	scraper.SetShopsForTesting(map[string]mcp.ShopData{
 		"Aldi":      {Coordinates: mcp.Coordinates{Latitude: 46.8451, Longitude: 16.8455}},
 		"Interspar": {Coordinates: mcp.Coordinates{Latitude: 46.8413, Longitude: 16.8521}},
@@ -106,7 +106,7 @@ func TestOptimizer_EmptyPrices(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping network-bound test in short mode")
 	}
-		scraper := mcp.NewPriceScraper()
+	scraper := mcp.NewPriceScraper()
 	scraper.SetShopsForTesting(map[string]mcp.ShopData{
 		"Aldi":      {Coordinates: mcp.Coordinates{Latitude: 46.8451, Longitude: 16.8455}},
 		"Interspar": {Coordinates: mcp.Coordinates{Latitude: 46.8413, Longitude: 16.8521}},
@@ -142,7 +142,7 @@ func TestOptimizer_EmptyItems(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping network-bound test in short mode")
 	}
-		scraper := mcp.NewPriceScraper()
+	scraper := mcp.NewPriceScraper()
 	scraper.SetShopsForTesting(map[string]mcp.ShopData{
 		"Aldi":      {Coordinates: mcp.Coordinates{Latitude: 46.8451, Longitude: 16.8455}},
 		"Interspar": {Coordinates: mcp.Coordinates{Latitude: 46.8413, Longitude: 16.8521}},
@@ -183,5 +183,41 @@ func TestOptimizer_EmptyItems(t *testing.T) {
 
 	if len(plan.Steps[0].Items) != 0 {
 		t.Errorf("Expected 0 items, got %d", len(plan.Steps[0].Items))
+	}
+}
+
+func TestOptimizer_GetShopCoordinatesError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
+	scraper := mcp.NewPriceScraper()
+	scraper.SetShopsForTesting(map[string]mcp.ShopData{
+		"Aldi": {Coordinates: mcp.Coordinates{Latitude: 46.8451, Longitude: 16.8455}},
+	})
+	planner := mcp.NewRoutePlanner()
+	optimizer := NewOptimizer(planner, scraper)
+
+	list := models.ShoppingList{
+		Items: []models.ShoppingItem{
+			{Name: "kenyér", Quantity: 1},
+		},
+	}
+
+	prices := map[string]float64{
+		"UnknownShop": 500.0,
+	}
+
+	userCoords := mcp.Coordinates{
+		Latitude:  46.8400,
+		Longitude: 16.8439,
+	}
+
+	_, err := optimizer.Optimize(list, prices, userCoords)
+	if err == nil {
+		t.Fatalf("Expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "not found in database") {
+		t.Errorf("Expected 'not found in database', got: %v", err)
 	}
 }
