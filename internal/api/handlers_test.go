@@ -75,6 +75,18 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Valid Token", func(t *testing.T) {
+		resetPricesFilePathCacheForTesting()
+
+		tempDir := t.TempDir()
+		filePath := tempDir + "/prices.json"
+		if err := os.WriteFile(filePath, []byte(`{"status": "success"}`), 0644); err != nil {
+			t.Fatalf("Failed to create temp prices.json: %v", err)
+		}
+
+		originalEnv := os.Getenv("PRICES_FILE_PATH")
+		os.Setenv("PRICES_FILE_PATH", filePath)
+		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
+
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
 		defer os.Setenv("ADMIN_TOKEN", originalToken)
@@ -102,21 +114,17 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("POST Valid Token and Body", func(t *testing.T) {
-		filePath := "../../internal/data/prices.json"
-		if _, err := os.Stat(filePath); err != nil {
-			filePath = "internal/data/prices.json"
+		resetPricesFilePathCacheForTesting()
+
+		tempDir := t.TempDir()
+		filePath := tempDir + "/prices.json"
+		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
+			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
 
-		originalData, err := os.ReadFile(filePath)
-		if err != nil {
-			t.Fatalf("Failed to read original prices.json: %v", err)
-		}
-		defer func() {
-			err := os.WriteFile(filePath, originalData, 0644)
-			if err != nil {
-				t.Errorf("Failed to restore original prices.json: %v", err)
-			}
-		}()
+		originalEnv := os.Getenv("PRICES_FILE_PATH")
+		os.Setenv("PRICES_FILE_PATH", filePath)
+		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
@@ -334,82 +342,26 @@ func TestSendJSONError(t *testing.T) {
 }
 
 func TestGetPricesFilePath(t *testing.T) {
-	// Save the original working directory
-	originalWD, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get current working directory: %v", err)
-	}
-	defer func() {
-		if err := os.Chdir(originalWD); err != nil {
-			t.Errorf("Failed to restore original working directory: %v", err)
-		}
-	}()
-
-	t.Run("File exists in current directory (internal/data/prices.json)", func(t *testing.T) {
+	t.Run("File path from environment variable", func(t *testing.T) {
 		resetPricesFilePathCacheForTesting()
-		tempDir := t.TempDir()
-		if err := os.Chdir(tempDir); err != nil {
-			t.Fatalf("Failed to change working directory: %v", err)
-		}
-		defer os.Chdir(originalWD)
 
-		dataDir := "internal/data"
-		if err := os.MkdirAll(dataDir, 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		filePath := dataDir + "/prices.json"
-		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
-			t.Fatalf("Failed to create test file: %v", err)
-		}
+		expected := "/tmp/custom/prices.json"
+		originalEnv := os.Getenv("PRICES_FILE_PATH")
+		os.Setenv("PRICES_FILE_PATH", expected)
+		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
 
 		got := getPricesFilePath()
-		expected := "internal/data/prices.json"
 		if got != expected {
 			t.Errorf("Expected %q, got %q", expected, got)
 		}
 	})
 
-	t.Run("File exists in parent directory (../../internal/data/prices.json)", func(t *testing.T) {
+	t.Run("Fallback to default", func(t *testing.T) {
 		resetPricesFilePathCacheForTesting()
-		tempDir := t.TempDir()
 
-		// Create the target file structure
-		dataDir := tempDir + "/internal/data"
-		if err := os.MkdirAll(dataDir, 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		filePath := dataDir + "/prices.json"
-		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
-			t.Fatalf("Failed to create test file: %v", err)
-		}
-
-		// Create and switch to the API directory structure
-		apiDir := tempDir + "/internal/api"
-		if err := os.MkdirAll(apiDir, 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		if err := os.Chdir(apiDir); err != nil {
-			t.Fatalf("Failed to change working directory: %v", err)
-		}
-		defer os.Chdir(originalWD)
-
-		got := getPricesFilePath()
-		expected := "../../internal/data/prices.json"
-		if got != expected {
-			t.Errorf("Expected %q, got %q", expected, got)
-		}
-	})
-
-	t.Run("File does not exist (fallback to default)", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-		tempDir := t.TempDir()
-		if err := os.Chdir(tempDir); err != nil {
-			t.Fatalf("Failed to change working directory: %v", err)
-		}
-		defer os.Chdir(originalWD)
+		originalEnv := os.Getenv("PRICES_FILE_PATH")
+		os.Setenv("PRICES_FILE_PATH", "")
+		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
 
 		got := getPricesFilePath()
 		expected := "internal/data/prices.json"
