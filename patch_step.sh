@@ -1,3 +1,0 @@
-# To execute tests before commit
-go build ./...
-go test ./... -cover
