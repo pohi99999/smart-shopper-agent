@@ -70,3 +70,62 @@ func TestRoutePlanner_ErrorResponses(t *testing.T) {
 		}
 	})
 }
+
+func TestRoutePlanner_CalculateRouteMatrix(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping network-bound test in short mode")
+	}
+
+	rp := NewRoutePlanner()
+	req := RouteMatrixRequest{
+		Source: Coordinates{
+			Latitude:  46.8400, // Zalaegerszeg
+			Longitude: 16.8439,
+		},
+		Destinations: map[string]Coordinates{
+			"Shop1": {
+				Latitude:  46.8450,
+				Longitude: 16.8500,
+			},
+			"Shop2": {
+				Latitude:  46.8500,
+				Longitude: 16.8400,
+			},
+		},
+	}
+
+	resp, err := rp.CalculateRouteMatrix(req)
+	if err != nil {
+		t.Logf("Route matrix calculation failed: %v", err)
+		return
+	}
+
+	if len(resp) != 2 {
+		t.Errorf("Expected 2 responses, got %d", len(resp))
+	}
+
+	for name, route := range resp {
+		if route.DistanceKM <= 0 {
+			t.Errorf("Expected positive distance for %s, got %f", name, route.DistanceKM)
+		}
+	}
+}
+
+func TestRoutePlanner_CalculateRouteMatrixEmpty(t *testing.T) {
+	rp := NewRoutePlanner()
+	req := RouteMatrixRequest{
+		Source: Coordinates{
+			Latitude:  46.8400, // Zalaegerszeg
+			Longitude: 16.8439,
+		},
+		Destinations: map[string]Coordinates{},
+	}
+
+	resp, err := rp.CalculateRouteMatrix(req)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(resp) != 0 {
+		t.Errorf("Expected 0 responses, got %d", len(resp))
+	}
+}

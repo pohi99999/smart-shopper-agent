@@ -2,8 +2,6 @@ package agents
 
 import (
 	"fmt"
-	"golang.org/x/sync/errgroup"
-	"sync"
 
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
@@ -24,45 +22,50 @@ func NewOptimizer(planner *mcp.RoutePlanner, scraper *mcp.PriceScraper) *Optimiz
 }
 
 func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64, userCoords mcp.Coordinates) (models.RoutePlan, error) {
-	bestShop := ""
-	minCost := -1.0
-	var mu sync.Mutex
-	var g errgroup.Group
-
-	for shopName, price := range prices {
-		shopName := shopName
-		price := price
-
-		g.Go(func() error {
-			coords, err := o.scraper.GetShopCoordinates(shopName)
-			if err != nil {
-				return err
-			}
-			routeResp, err := o.planner.CalculateRoute(mcp.RouteRequest{
-				Source:      userCoords,
-				Destination: coords,
-			})
-			if err != nil {
-				return err
-			}
-
-			// Skip if the distance is greater than 50 km
-			if routeResp.DistanceKM > 50.0 {
-				return nil
-			}
-
-			mu.Lock()
-			defer mu.Unlock()
-			if minCost == -1.0 || price < minCost {
-				minCost = price
-				bestShop = shopName
-			}
-			return nil
-		})
+	if len(prices) == 0 {
+		return models.RoutePlan{}, fmt.Errorf("no shops found within 50 km")
 	}
 
-	if err := g.Wait(); err != nil {
+	bestShop := ""
+	minCost := -1.0
+
+	// Gather all destinations
+	destinations := make(map[string]mcp.Coordinates)
+	for shopName := range prices {
+		coords, err := o.scraper.GetShopCoordinates(shopName)
+		if err != nil {
+			return models.RoutePlan{}, err
+		}
+		destinations[shopName] = coords
+	}
+
+	matrixReq := mcp.RouteMatrixRequest{
+		Source:       userCoords,
+		Destinations: destinations,
+	}
+
+	matrixResp, err := o.planner.CalculateRouteMatrix(matrixReq)
+	if err != nil {
 		return models.RoutePlan{}, err
+	}
+
+	for shopName, price := range prices {
+		routeResp, ok := matrixResp[shopName]
+		if !ok {
+			// This shouldn't happen unless OSRM failed to return a route for this specific shop,
+			// but we'll safely skip if it happens.
+			continue
+		}
+
+		// Skip if the distance is greater than 50 km
+		if routeResp.DistanceKM > 50.0 {
+			continue
+		}
+
+		if minCost == -1.0 || price < minCost {
+			minCost = price
+			bestShop = shopName
+		}
 	}
 
 	if bestShop == "" {
