@@ -20,20 +20,18 @@ type visitor struct {
 
 // rateLimiter struct holds the limiters for different IP addresses
 type rateLimiter struct {
-	visitors    map[string]*visitor
-	mu          sync.Mutex
-	rate        rate.Limit
-	burst       int
-	lastCleanup time.Time
+	visitors map[string]*visitor
+	mu       sync.Mutex
+	rate     rate.Limit
+	burst    int
 }
 
 // NewRateLimiter creates a new rate limiter (10 requests per minute = ~0.16 req/sec)
 func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
 	return &rateLimiter{
-		visitors:    make(map[string]*visitor),
-		rate:        r,
-		burst:       b,
-		lastCleanup: time.Now(),
+		visitors: make(map[string]*visitor),
+		rate:     r,
+		burst:    b,
 	}
 }
 
@@ -44,14 +42,17 @@ func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 
 	now := time.Now()
 
-	// Opportunistic cleanup: Every 3 minutes, remove entries that haven't been seen for 3 minutes
-	if now.Sub(i.lastCleanup) > 3*time.Minute {
-		for ip, v := range i.visitors {
-			if now.Sub(v.lastSeen) > 3*time.Minute {
-				delete(i.visitors, ip)
-			}
+	// Incremental cleanup: Remove up to 10 stale entries on every request
+	// This avoids an O(N) pause when cleaning up thousands of old IP addresses under a global lock.
+	checked := 0
+	for iterIP, v := range i.visitors {
+		if now.Sub(v.lastSeen) > 3*time.Minute {
+			delete(i.visitors, iterIP)
 		}
-		i.lastCleanup = now
+		checked++
+		if checked >= 10 { // Batch size 10 to keep O(1) properties
+			break
+		}
 	}
 
 	v, exists := i.visitors[ip]
