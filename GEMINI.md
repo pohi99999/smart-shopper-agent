@@ -369,3 +369,20 @@ A 2026-07-20-i integrációs mérföldkő során Jules 16 távoli háttérágán
 - A React Native mobil frontend tesztek (`npm test` a `mobile` könyvtárban) mind a 6 tesztcsomagra sikeresen lefutottak (**6/6 PASS, 16/16 teszt sikeres**).
 - A frissített `main` ág sikeresen szinkronizálva és feltöltésre (push) került a GitHub távoli tárolóba: `https://github.com/pohi99999/smart-shopper-agent.git`.
 
+## 28. Fázis: Jules Aszinkron Fejlesztéseinek, Biztonsági és Kód-egészségügyi Javításainak Teljes Integrálása (2026-07-22)
+
+A 28. fázis során felderítésre, ellenőrzésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules legújabb aszinkron háttérben végzett fejlesztései, teljesítmény-optimalizációi és biztonsági javításai.
+
+### Beépített Fejlesztések és Javítások
+- **Elérési utak központosítása (Code Health):** Létrejött a [internal/utils/paths.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/utils/paths.go) csomag `GetPricesFilePath()` szemantikus segédfüggvénnyel a duplikált `prices.json` elérési út meghatározásának felszámolására. Az [internal/api/handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) és tesztfájljai át lettek állítva ennek a feladat-orientált segédfüggvénynek a használatára (`code-health-consolidate-path-logic-2600671455679642163`).
+- **O(1) Inkrementális Rate Limiting Tisztítás:** A [middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) rate limiterje kibővült inkrementális kötegelt törléssel (max 10 elavult elem törlése kérésenként a globális zár alatt), elkerülve a hosszú O(N) leállásokat nagy forgalom esetén (`jules-17604262814848995977-9bf5f9bd`).
+- **OSRM Matrix API Párhuzamosítás & Elérési Utak Védelme:** Párhuzamosított OSRM kérések és útvonaltervezés, valamint biztonságos path traversal védelem a `prices.json` adatbázis lekérdezésében (`jules-3902646680551396089-b4afe675`, `security-fix-prices-file-path-16256814756297493817`).
+- **Dockerfile és Go Toolchain Kompatibilitás:** Frissítésre került a Dockerfile `golang:1.26-alpine` alapkép megadásával, biztosítva a Go 1.26 modul és a build folyamat teljes kompatibilitását (`jules-10229537789106017338-965b990f`, `add-optimizer-error-test-1851212368668737038`).
+- **Optimizer Hibaág Tesztlefedettség:** Elkészült az [optimizer_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/optimizer_test.go) kibővítése a boltlánc koordináta hibaágak lefedésére (`add-optimizer-error-test-1851212368668737038`).
+
+### Tesztelés és Verifikáció
+- A Go backend unit és integrációs tesztek (`go test ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) zöldek: **6/6 PASS, 16/16 teszt sikeres**.
+- A frissített `main` ág feltöltésre került a GitHub tárolóba (`https://github.com/pohi99999/smart-shopper-agent.git`).
+
+
