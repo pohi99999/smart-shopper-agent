@@ -38,7 +38,6 @@ func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
 // getLimiter returns the limiter for the provided IP address and performs opportunistic cleanup.
 func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 	i.mu.Lock()
-	defer i.mu.Unlock()
 
 	now := time.Now()
 
@@ -63,8 +62,21 @@ func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 	} else {
 		v.lastSeen = now
 	}
+	i.mu.Unlock()
 
 	return v.limiter
+}
+
+// cleanup removes old entries from the visitors map.
+func (i *rateLimiter) cleanup() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	now := time.Now()
+	for ip, v := range i.visitors {
+		if now.Sub(v.lastSeen) > 3*time.Minute {
+			delete(i.visitors, ip)
+		}
+	}
 }
 
 var limiter = NewRateLimiter(rate.Every(time.Minute/10), 10) // 10 requests per minute
