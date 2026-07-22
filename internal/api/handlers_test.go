@@ -8,6 +8,7 @@ import (
 	"os"
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
+	"smart-shopper-agent/internal/utils"
 	"testing"
 )
 
@@ -114,8 +115,6 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("POST Valid Token and Body", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
 		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
@@ -341,32 +340,3 @@ func TestSendJSONError(t *testing.T) {
 	}
 }
 
-func TestGetPricesFilePath(t *testing.T) {
-	t.Run("File path from environment variable", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-
-		expected := "/tmp/custom/prices.json"
-		originalEnv := os.Getenv("PRICES_FILE_PATH")
-		os.Setenv("PRICES_FILE_PATH", expected)
-		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
-
-		got := getPricesFilePath()
-		if got != expected {
-			t.Errorf("Expected %q, got %q", expected, got)
-		}
-	})
-
-	t.Run("Fallback to default", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
-
-		originalEnv := os.Getenv("PRICES_FILE_PATH")
-		os.Setenv("PRICES_FILE_PATH", "")
-		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
-
-		got := getPricesFilePath()
-		expected := "internal/data/prices.json"
-		if got != expected {
-			t.Errorf("Expected %q, got %q", expected, got)
-		}
-	})
-}
