@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -108,27 +109,34 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 	}
 
 	// Build the coordinate string: {source_lon},{source_lat};{dest1_lon},{dest1_lat};...
-	coordsStr := fmt.Sprintf("%f,%f", req.Source.Longitude, req.Source.Latitude)
+	var coordsBuilder strings.Builder
+	// Approximate capacity based on ~25 characters per coordinate pair (e.g. "-123.456789,-123.456789;")
+	coordsBuilder.Grow((len(req.Destinations) + 1) * 25)
+
+	fmt.Fprintf(&coordsBuilder, "%f,%f", req.Source.Longitude, req.Source.Latitude)
 
 	// Ensure consistent order of destinations
 	shopNames := make([]string, 0, len(req.Destinations))
 	for name, coord := range req.Destinations {
-		coordsStr += fmt.Sprintf(";%f,%f", coord.Longitude, coord.Latitude)
+		fmt.Fprintf(&coordsBuilder, ";%f,%f", coord.Longitude, coord.Latitude)
 		shopNames = append(shopNames, name)
 	}
 
 	// sources=0 means the first coordinate is the source
 	// destinations=1,2,... means the rest are destinations
-	destIndices := ""
+	var destIndicesBuilder strings.Builder
+	// Approximate capacity: max 5 chars per index + separator
+	destIndicesBuilder.Grow(len(req.Destinations) * 6)
+
 	for i := 1; i <= len(req.Destinations); i++ {
 		if i > 1 {
-			destIndices += ";"
+			destIndicesBuilder.WriteString(";")
 		}
-		destIndices += fmt.Sprintf("%d", i)
+		fmt.Fprintf(&destIndicesBuilder, "%d", i)
 	}
 
 	url := fmt.Sprintf("%s/table/v1/driving/%s?sources=0&destinations=%s&annotations=distance,duration",
-		rp.baseURL, coordsStr, destIndices)
+		rp.baseURL, coordsBuilder.String(), destIndicesBuilder.String())
 
 	resp, err := rp.client.Get(url)
 	if err != nil {
