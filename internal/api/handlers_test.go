@@ -76,7 +76,7 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Valid Token", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
+		utils.ResetPricesFilePathCacheForTesting()
 
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
@@ -115,6 +115,8 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("POST Valid Token and Body", func(t *testing.T) {
+		utils.ResetPricesFilePathCacheForTesting()
+		utils.ResetPricesFilePathCacheForTesting()
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
 		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
