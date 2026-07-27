@@ -76,7 +76,7 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Valid Token", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
+		utils.ResetPricesFilePathCacheForTesting()
 
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
@@ -87,6 +87,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
+		utils.ResetPricesFilePathCacheForTesting()
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
@@ -124,6 +125,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
+		utils.ResetPricesFilePathCacheForTesting()
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
@@ -339,4 +341,3 @@ func TestSendJSONError(t *testing.T) {
 		t.Errorf("Expected error code %d in JSON body, got %d", expectedStatusCode, errResp.Code)
 	}
 }
-

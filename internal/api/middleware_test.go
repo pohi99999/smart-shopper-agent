@@ -241,3 +241,90 @@ func TestSecurityHeadersMiddleware_Options(t *testing.T) {
 			status, http.StatusOK)
 	}
 }
+
+func TestLoadTrustedProxies(t *testing.T) {
+	// Save original env var to restore later
+	originalEnv := os.Getenv("TRUSTED_PROXIES")
+	defer func() {
+		os.Setenv("TRUSTED_PROXIES", originalEnv)
+		LoadTrustedProxies() // Restore original state
+	}()
+
+	tests := []struct {
+		name        string
+		envVar      string
+		expectedLen int
+		expected    []string // String representations of expected CIDRs
+	}{
+		{
+			name:        "Empty env var",
+			envVar:      "",
+			expectedLen: 0,
+			expected:    nil,
+		},
+		{
+			name:        "Single IPv4",
+			envVar:      "192.168.1.1",
+			expectedLen: 1,
+			expected:    []string{"192.168.1.1/32"},
+		},
+		{
+			name:        "Single IPv6",
+			envVar:      "2001:db8::1",
+			expectedLen: 1,
+			expected:    []string{"2001:db8::1/128"},
+		},
+		{
+			name:        "IPv4 CIDR",
+			envVar:      "10.0.0.0/8",
+			expectedLen: 1,
+			expected:    []string{"10.0.0.0/8"},
+		},
+		{
+			name:        "IPv6 CIDR",
+			envVar:      "2001:db8::/32",
+			expectedLen: 1,
+			expected:    []string{"2001:db8::/32"},
+		},
+		{
+			name:        "Multiple mixed values with spaces",
+			envVar:      "192.168.1.1, 10.0.0.0/8 , 2001:db8::1",
+			expectedLen: 3,
+			expected:    []string{"192.168.1.1/32", "10.0.0.0/8", "2001:db8::1/128"},
+		},
+		{
+			name:        "Invalid IPs and CIDRs",
+			envVar:      "invalid-ip, 192.168.1.999, 10.0.0.0/99, 192.168.1.1",
+			expectedLen: 1,
+			expected:    []string{"192.168.1.1/32"},
+		},
+		{
+			name:        "Empty proxies between commas",
+			envVar:      "192.168.1.1,, ,10.0.0.0/8",
+			expectedLen: 2,
+			expected:    []string{"192.168.1.1/32", "10.0.0.0/8"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.Setenv("TRUSTED_PROXIES", tt.envVar)
+			LoadTrustedProxies()
+
+			trustedProxiesMu.RLock()
+			defer trustedProxiesMu.RUnlock()
+
+			if len(trustedProxiesCache) != tt.expectedLen {
+				t.Errorf("Expected cache length %d, got %d", tt.expectedLen, len(trustedProxiesCache))
+			}
+
+			if tt.expectedLen > 0 {
+				for i, expectedCIDR := range tt.expected {
+					if trustedProxiesCache[i].String() != expectedCIDR {
+						t.Errorf("Expected CIDR at index %d to be %s, got %s", i, expectedCIDR, trustedProxiesCache[i].String())
+					}
+				}
+			}
+		})
+	}
+}
