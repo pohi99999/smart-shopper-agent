@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 type RoundTripFunc func(req *http.Request) *http.Response
@@ -162,5 +163,22 @@ func TestBuildRequestBody(t *testing.T) {
 				t.Errorf("expected response mime type 'application/json', got %q", reqBody.GenerationConfig.ResponseMimeType)
 			}
 		})
+	}
+}
+
+func TestNewParser(t *testing.T) {
+	parser := NewParser()
+	if parser == nil {
+		t.Fatalf("Expected NewParser to return a non-nil pointer")
+	}
+	if parser.Client == nil {
+		t.Fatalf("Expected parser.Client to be initialized")
+	}
+	if parser.Client.Timeout != 10*time.Second {
+		t.Errorf("Expected timeout 10s, got %v", parser.Client.Timeout)
+	}
+	expectedURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+	if parser.APIURL != expectedURL {
+		t.Errorf("Expected APIURL %q, got %q", expectedURL, parser.APIURL)
 	}
 }
