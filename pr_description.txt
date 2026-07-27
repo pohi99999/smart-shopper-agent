@@ -1,4 +1,0 @@
-🎯 **What:** Replaced production `console.error` and `console.warn` statements with `Sentry.captureException` in `api.ts`, `useShoppingOptimizer.ts`, and `subscriptionService.ts`. Dev-only logging was wrapped in `if (__DEV__)`. The contexts of the replaced logging have been correctly preserved by passing `{ extra: { context: ... } }`.
-💡 **Why:** Ensures consistent error logging to Sentry and keeps the production console clean without losing context.
-✅ **Verification:** Verified package.json for `@sentry/react-native`. Ran `npm test -- --passWithNoTests` successfully. Also passed code review feedback regarding context retention.
-✨ **Result:** Safe logging with preserved context and cleaner production code.
