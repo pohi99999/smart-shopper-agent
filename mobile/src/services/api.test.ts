@@ -28,7 +28,7 @@ describe('optimizeShoppingRoute', () => {
 
     const result = await optimizeShoppingRoute('tej', 47.123, 19.456);
 
-    expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/api/v1/optimize', {
+    expect(global.fetch).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/optimize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,6 +42,29 @@ describe('optimizeShoppingRoute', () => {
       }),
     });
     expect(result).toEqual(mockResponseData);
+  });
+
+
+  it('successfully uses EXPO_PUBLIC_API_URL environment variable', async () => {
+    const originalEnv = process.env.EXPO_PUBLIC_API_URL;
+    process.env.EXPO_PUBLIC_API_URL = 'http://api.example.com';
+
+    const mockResponseData: OptimizeResponse = {
+      route_plan: { steps: [] },
+      total_cost: 0,
+    };
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponseData,
+    });
+
+    await optimizeShoppingRoute('tej', 47.123, 19.456);
+
+    expect(global.fetch).toHaveBeenCalledWith('http://api.example.com/api/v1/optimize', expect.any(Object));
+
+    // Restore
+    process.env.EXPO_PUBLIC_API_URL = originalEnv;
   });
 
   it('throws an error when the API returns a non-200 response with JSON error', async () => {

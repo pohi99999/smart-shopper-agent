@@ -32,7 +32,8 @@ export async function optimizeShoppingRoute(
   latitude: number,
   longitude: number
 ): Promise<OptimizeResponse> {
-  const url = 'http://localhost:8080/api/v1/optimize';
+  const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
+  const url = `${baseUrl}/api/v1/optimize`;
   
   try {
     const requestBody: OptimizeRequest = {
