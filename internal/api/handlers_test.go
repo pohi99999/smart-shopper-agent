@@ -76,17 +76,19 @@ func TestAdminPricesHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("Valid Token", func(t *testing.T) {
+		t.Run("Valid Token", func(t *testing.T) {
 		utils.ResetPricesFilePathCacheForTesting()
+
+		originalWD, _ := os.Getwd()
 		tempDir := t.TempDir()
-		filePath := tempDir + "/prices.json"
+		os.Chdir(tempDir)
+		defer os.Chdir(originalWD)
+
+		os.MkdirAll("internal/data", 0755)
+		filePath := "internal/data/prices.json"
 		if err := os.WriteFile(filePath, []byte(`{"status": "success"}`), 0644); err != nil {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
-
-		originalEnv := os.Getenv("PRICES_FILE_PATH")
-		os.Setenv("PRICES_FILE_PATH", filePath)
-		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
@@ -114,17 +116,22 @@ func TestAdminPricesHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("POST Valid Token and Body", func(t *testing.T) {
+		t.Run("POST Valid Token and Body", func(t *testing.T) {
 		utils.ResetPricesFilePathCacheForTesting()
+
+		// The utils.GetPricesFilePath() expects the file to be at "internal/data/prices.json"
+		// or "../../internal/data/prices.json" relative to current working dir.
+
+		originalWD, _ := os.Getwd()
 		tempDir := t.TempDir()
-		filePath := tempDir + "/prices.json"
+		os.Chdir(tempDir)
+		defer os.Chdir(originalWD)
+
+		os.MkdirAll("internal/data", 0755)
+		filePath := "internal/data/prices.json"
 		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
-
-		originalEnv := os.Getenv("PRICES_FILE_PATH")
-		os.Setenv("PRICES_FILE_PATH", filePath)
-		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
