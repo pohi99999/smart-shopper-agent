@@ -76,7 +76,7 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Valid Token", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
+		utils.ResetPricesFilePathCacheForTesting()
 
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
@@ -115,6 +115,7 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("POST Valid Token and Body", func(t *testing.T) {
+		utils.ResetPricesFilePathCacheForTesting()
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
 		if err := os.WriteFile(filePath, []byte("{}"), 0644); err != nil {
@@ -220,6 +221,19 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 
 	t.Run("Invalid Body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer([]byte("invalid json")))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+	})
+
+	t.Run("Input Too Long", func(t *testing.T) {
+		longInput := string(make([]byte, 2001))
+		body, _ := json.Marshal(OptimizeRequest{UserInput: longInput})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(body))
 		rec := httptest.NewRecorder()
 
 		handler.OptimizeHandler(rec, req)
@@ -339,4 +353,3 @@ func TestSendJSONError(t *testing.T) {
 		t.Errorf("Expected error code %d in JSON body, got %d", expectedStatusCode, errResp.Code)
 	}
 }
-
