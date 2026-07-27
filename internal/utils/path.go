@@ -17,6 +17,11 @@ func ResetPricesFilePathCacheForTesting() {
 
 func GetPricesFilePath() string {
 	pricesFilePathOnce.Do(func() {
+		if envPath := os.Getenv("PRICES_FILE_PATH"); envPath != "" {
+			pricesFilePath = envPath
+			return
+		}
+
 		filePath := "internal/data/prices.json"
 		if _, err := os.Stat(filePath); err != nil {
 			if _, err2 := os.Stat("../../internal/data/prices.json"); err2 == nil {
