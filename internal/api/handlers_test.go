@@ -1,14 +1,14 @@
 package api
 
 import (
-	"bytes"
+	"smart-shopper-agent/internal/utils"
+"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
-	"smart-shopper-agent/internal/utils"
 	"testing"
 )
 
@@ -76,7 +76,6 @@ func TestAdminPricesHandler(t *testing.T) {
 	})
 
 	t.Run("Valid Token", func(t *testing.T) {
-		resetPricesFilePathCacheForTesting()
 
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
@@ -84,6 +83,8 @@ func TestAdminPricesHandler(t *testing.T) {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
 
+		utils.ResetPricesFilePathCacheForTesting()
+		defer utils.ResetPricesFilePathCacheForTesting()
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
@@ -121,6 +122,8 @@ func TestAdminPricesHandler(t *testing.T) {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
 
+		utils.ResetPricesFilePathCacheForTesting()
+		defer utils.ResetPricesFilePathCacheForTesting()
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
@@ -339,4 +342,3 @@ func TestSendJSONError(t *testing.T) {
 		t.Errorf("Expected error code %d in JSON body, got %d", expectedStatusCode, errResp.Code)
 	}
 }
-

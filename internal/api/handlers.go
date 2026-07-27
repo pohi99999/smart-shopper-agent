@@ -53,7 +53,6 @@ type OptimizeResponse struct {
 	TotalCost float64          `json:"total_cost" example:"1250"`
 }
 
-
 // OptimizeHandler godoc
 // @Summary Calculate optimized shopping route
 // @Description Extracts shopping items from natural language, fetches prices, and calculates the optimal shopping route and total cost based on the user's location.
