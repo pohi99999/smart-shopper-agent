@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 import { optimizeShoppingRoute, OptimizeResponse, Coordinate } from '../services/api';
 
 const ASYNC_STORAGE_KEY = '@last_shopping_result';
@@ -31,7 +32,7 @@ export function useShoppingOptimizer() {
           });
         }
       } catch (error) {
-        console.warn('Hiba a kezdeti inicializáció során:', error);
+        Sentry.captureException(error, { extra: { context: 'Hiba a kezdeti inicializáció során:' } });
       }
     })();
   }, []);
@@ -63,7 +64,7 @@ export function useShoppingOptimizer() {
         );
       }
     } catch (error) {
-      console.warn('Hiba a helymeghatározás során:', error);
+      Sentry.captureException(error, { extra: { context: 'Hiba a helymeghatározás során:' } });
       Alert.alert(
         'Helyadat hiba',
         'A rendszer Budapest központjával tervez útvonalat.',

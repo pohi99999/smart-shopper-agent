@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/react-native';
+
 export interface Coordinate {
   latitude: number;
   longitude: number;
@@ -67,7 +69,7 @@ export async function optimizeShoppingRoute(
     const data = await response.json();
     return data as OptimizeResponse;
   } catch (error) {
-    console.error('Error optimizing shopping route:', error);
+    Sentry.captureException(error, { extra: { context: 'Error optimizing shopping route' } });
     throw error;
   }
 }
