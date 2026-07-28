@@ -2,7 +2,6 @@ package api
 
 import (
 	"net"
-
 	"net/http"
 	"os"
 	"strings"
@@ -24,35 +23,43 @@ type rateLimiter struct {
 	mu       sync.Mutex
 	rate     rate.Limit
 	burst    int
+	stop     chan struct{}
 }
 
 // NewRateLimiter creates a new rate limiter (10 requests per minute = ~0.16 req/sec)
 func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
-	return &rateLimiter{
+	rl := &rateLimiter{
 		visitors: make(map[string]*visitor),
 		rate:     r,
 		burst:    b,
+		stop:     make(chan struct{}),
+	}
+	go rl.runCleanup()
+	return rl
+}
+
+func (i *rateLimiter) runCleanup() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			i.cleanup()
+		case <-i.stop:
+			return
+		}
 	}
 }
 
-// getLimiter returns the limiter for the provided IP address and performs opportunistic cleanup.
+// Stop terminates the background cleanup goroutine
+func (i *rateLimiter) Stop() {
+	close(i.stop)
+}
+
+// getLimiter returns the limiter for the provided IP address
 func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
 	i.mu.Lock()
-
 	now := time.Now()
-
-	// Incremental cleanup: Remove up to 10 stale entries on every request
-	// This avoids an O(N) pause when cleaning up thousands of old IP addresses under a global lock.
-	checked := 0
-	for iterIP, v := range i.visitors {
-		if now.Sub(v.lastSeen) > 3*time.Minute {
-			delete(i.visitors, iterIP)
-		}
-		checked++
-		if checked >= 10 { // Batch size 10 to keep O(1) properties
-			break
-		}
-	}
 
 	v, exists := i.visitors[ip]
 	if !exists {
@@ -186,8 +193,8 @@ func GetClientIP(r *http.Request) string {
 func RateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ip := GetClientIP(r)
-		limiter := limiter.getLimiter(ip)
-		if !limiter.Allow() {
+		l := limiter.getLimiter(ip)
+		if !l.Allow() {
 			SendJSONError(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
 			return
 		}

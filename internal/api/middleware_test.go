@@ -14,6 +14,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 	// Keep the original limiter to restore it later
 	originalLimiter := limiter
 	defer func() {
+		limiter.Stop() // Stop the newly created global one for tests
 		limiter = originalLimiter
 	}()
 
@@ -73,6 +74,7 @@ func TestRateLimitMiddleware_ForwardedFor(t *testing.T) {
 	// Keep the original limiter to restore it later
 	originalLimiter := limiter
 	defer func() {
+		limiter.Stop() // Stop the newly created global one for tests
 		limiter = originalLimiter
 	}()
 
