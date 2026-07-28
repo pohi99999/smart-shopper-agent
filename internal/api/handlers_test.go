@@ -90,6 +90,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
+		utils.ResetPricesFilePathCacheForTesting()
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "secret-admin-token-123")
@@ -130,6 +131,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
+		utils.ResetPricesFilePathCacheForTesting()
 
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
