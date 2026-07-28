@@ -385,4 +385,22 @@ A 28. fázis során felderítésre, ellenőrzésre és biztonságosan beolvaszt�
 - A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) zöldek: **6/6 PASS, 16/16 teszt sikeres**.
 - A frissített `main` ág feltöltésre került a GitHub tárolóba (`https://github.com/pohi99999/smart-shopper-agent.git`).
 
+## 28. Fázis: Jules Aszinkron Fejlesztéseinek, Biztonsági és Teljesítmény-Optimalizációs Ágainak Teljes Integrációja (2026-07-28)
+
+A 28. fázis záró mérföldkövében átvizsgálásra, tesztelésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules legújabb aszinkron háttérben végzett ágai, feloldva az esetleges merge konfliktusokat és garantálva a 100%-os tesztstabilitást.
+
+### Beépített Fejlesztések, Optimalizációk és Biztonsági Javítások
+- **LoadTrustedProxies Unit Tesztek (`add-missing-loadtrustedproxies-tests`):** Új unit tesztek kerültek hozzáadásra az IP csupaszítás és trusted proxy kezelés validálására a middleware tesztcsomagban.
+- **Sentry Logging Production Code-ban (`fix-sentry-logging`):** A `console.log` hívások le lettek cserélve Sentry naplózásra és hibarögzítésre a frontend produkciós állományokban ([useShoppingOptimizer.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/hooks/useShoppingOptimizer.ts), [api.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.ts), [subscriptionService.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/subscriptionService.ts)).
+- **Frontend Szigorú Típusbiztonság (`chore/remove-any-from-catch-block`):** Az `any` típusok el lettek távolítva a `try-catch` hibakezelő blokkokból a [useShoppingOptimizer.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/hooks/useShoppingOptimizer.ts) állományban, felváltva őket biztonságos típusosítással.
+- **Bemeneti Hossz Validáció (Input Length Validation) (`fix-missing-input-length-validation`):** Az [handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) `OptimizeHandler` metódusa 2000 karakteres bemeneti korlátot kapott (korai HTTP 400 elutasítással), megelőzve az LLM/Parser memóriaterheléses DoS támadásokat.
+- **Dinamikusan Konfigurálható API URL (`jules-6148170551827609198-94e3ee14` / `Remove hardcoded API URL`):** A [mobile/src/services/api.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.ts) bedrótozott API címe lecserélésre került `process.env.EXPO_PUBLIC_API_URL` környezeti változóra (`http://localhost:8080` fallbackkel), kiegészítve a viselkedést ellenőrző Jest tesztekkel.
+- **OSRM String.Builder & strconv.Itoa Optimalizáció (`optimize-route-planner-string-builder`):** A [route_planner_mcp.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/route_planner_mcp.go) útvonaltervező OSRM URL építése átírásra került memóriahatékony `strings.Builder` és `strconv.Itoa` használatára, kiegészítve a [route_planner_mcp_bench_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/route_planner_mcp_bench_test.go) benchmark teszttel.
+- **NewParser & API Handlers Teszt Javítások (`test-newparser`, `jules-14575576923695992499-97b7d66b`):** Hozzáadásra került a `TestNewParser` teszt az [internal/agents/parser_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/parser_test.go)-ban, valamint javításra került az `internal/api/handlers_test.go` tesztkörnyezet elszigetelése az `utils.ResetPricesFilePathCacheForTesting()` és a `PRICES_FILE_PATH` használatával.
+
+### Tesztelés és Szinkronizáció
+- A Go backend unit és integrációs tesztek (`go test ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
+- A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`), és a beolvasztott 8 távoli Jules feature ág törlésre került.
+
 
