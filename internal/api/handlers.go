@@ -53,7 +53,6 @@ type OptimizeResponse struct {
 	TotalCost float64          `json:"total_cost" example:"1250"`
 }
 
-
 // OptimizeHandler godoc
 // @Summary Calculate optimized shopping route
 // @Description Extracts shopping items from natural language, fetches prices, and calculates the optimal shopping route and total cost based on the user's location.
@@ -75,6 +74,11 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 	var req OptimizeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		SendJSONError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if len(req.UserInput) > 2000 {
+		SendJSONError(w, "Input too long", http.StatusBadRequest)
 		return
 	}
 

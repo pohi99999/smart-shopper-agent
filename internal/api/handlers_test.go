@@ -228,6 +228,19 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
 		}
 	})
+
+	t.Run("Input Too Long", func(t *testing.T) {
+		longInput := string(make([]byte, 2001))
+		body, _ := json.Marshal(OptimizeRequest{UserInput: longInput})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+	})
 }
 
 func TestOptimizeHandler_Integration(t *testing.T) {
