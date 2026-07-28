@@ -64,7 +64,7 @@
           "parameters": [
             {
               "name": "X-Admin-Token",
-              "value": "n8n-price-update-token-999"
+              "value": "={{ $env.ADMIN_TOKEN }}"
             },
             {
               "name": "Content-Type",
