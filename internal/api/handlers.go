@@ -11,13 +11,16 @@ import (
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/models"
 	"smart-shopper-agent/internal/utils"
+	"sync"
 )
 
 type APIHandler struct {
-	parser     *agents.Parser
-	pricer     *agents.Pricer
-	optimizer  *agents.Optimizer
-	adminToken string
+	parser         *agents.Parser
+	pricer         *agents.Pricer
+	optimizer      *agents.Optimizer
+	adminToken     string
+	pricesCache    interface{}
+	pricesCacheMut sync.RWMutex
 }
 
 func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agents.Optimizer) *APIHandler {
@@ -27,6 +30,38 @@ func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agen
 		optimizer:  optimizer,
 		adminToken: os.Getenv("ADMIN_TOKEN"),
 	}
+}
+
+func (h *APIHandler) getPricesData() (interface{}, error) {
+	h.pricesCacheMut.RLock()
+	if h.pricesCache != nil {
+		data := h.pricesCache
+		h.pricesCacheMut.RUnlock()
+		return data, nil
+	}
+	h.pricesCacheMut.RUnlock()
+
+	h.pricesCacheMut.Lock()
+	defer h.pricesCacheMut.Unlock()
+
+	// Double check
+	if h.pricesCache != nil {
+		return h.pricesCache, nil
+	}
+
+	filePath := utils.GetPricesFilePath()
+	bodyBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var data interface{}
+	if err := json.Unmarshal(bodyBytes, &data); err != nil {
+		return nil, err
+	}
+
+	h.pricesCache = data
+	return data, nil
 }
 
 type ErrorResponse struct {
@@ -147,16 +182,9 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	filePath := utils.GetPricesFilePath()
-	bodyBytes, err := os.ReadFile(filePath)
+	data, err := h.getPricesData()
 	if err != nil {
-		SendJSONError(w, "Failed to read prices: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var data interface{}
-	if err := json.Unmarshal(bodyBytes, &data); err != nil {
-		SendJSONError(w, "Failed to parse prices data: "+err.Error(), http.StatusInternalServerError)
+		SendJSONError(w, "Failed to load prices: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -217,6 +245,10 @@ func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Reque
 		SendJSONError(w, "Failed to save prices: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	h.pricesCacheMut.Lock()
+	h.pricesCache = temp
+	h.pricesCacheMut.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
