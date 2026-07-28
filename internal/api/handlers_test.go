@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"testing"
+
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
 	"smart-shopper-agent/internal/utils"
-	"testing"
 )
 
 func TestAdminPricesHandler(t *testing.T) {
