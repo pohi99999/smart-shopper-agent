@@ -71,6 +71,7 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	var req OptimizeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		SendJSONError(w, "Invalid request body", http.StatusBadRequest)
