@@ -11,7 +11,6 @@ import (
 
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
-	"smart-shopper-agent/internal/utils"
 )
 
 func TestAdminPricesHandler(t *testing.T) {
