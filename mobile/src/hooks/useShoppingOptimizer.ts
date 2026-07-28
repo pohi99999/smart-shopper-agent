@@ -76,10 +76,10 @@ export function useShoppingOptimizer() {
       setResult(response);
       // Save result to AsyncStorage
       await AsyncStorage.setItem(ASYNC_STORAGE_KEY, JSON.stringify(response));
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert(
         'Sikertelen optimalizálás',
-        error.message || 'Nem sikerült csatlakozni az optimalizáló szerverhez.'
+        (error instanceof Error ? error.message : undefined) || 'Nem sikerült csatlakozni az optimalizáló szerverhez.'
       );
     } finally {
       setLoading(false);
