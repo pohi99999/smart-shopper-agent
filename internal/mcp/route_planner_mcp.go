@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -125,14 +126,12 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 	// sources=0 means the first coordinate is the source
 	// destinations=1,2,... means the rest are destinations
 	var destIndicesBuilder strings.Builder
-	// Approximate capacity: max 5 chars per index + separator
 	destIndicesBuilder.Grow(len(req.Destinations) * 6)
-
 	for i := 1; i <= len(req.Destinations); i++ {
 		if i > 1 {
 			destIndicesBuilder.WriteString(";")
 		}
-		fmt.Fprintf(&destIndicesBuilder, "%d", i)
+		destIndicesBuilder.WriteString(strconv.Itoa(i))
 	}
 
 	url := fmt.Sprintf("%s/table/v1/driving/%s?sources=0&destinations=%s&annotations=distance,duration",

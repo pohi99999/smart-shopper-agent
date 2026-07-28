@@ -1,7 +1,8 @@
 package api
 
 import (
-	"bytes"
+	"smart-shopper-agent/internal/utils"
+"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -84,6 +85,8 @@ func TestAdminPricesHandler(t *testing.T) {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
 
+		utils.ResetPricesFilePathCacheForTesting()
+		defer utils.ResetPricesFilePathCacheForTesting()
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
@@ -122,6 +125,8 @@ func TestAdminPricesHandler(t *testing.T) {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
 
+		utils.ResetPricesFilePathCacheForTesting()
+		defer utils.ResetPricesFilePathCacheForTesting()
 		originalEnv := os.Getenv("PRICES_FILE_PATH")
 		os.Setenv("PRICES_FILE_PATH", filePath)
 		defer os.Setenv("PRICES_FILE_PATH", originalEnv)
