@@ -28,7 +28,7 @@ describe('optimizeShoppingRoute', () => {
 
     const result = await optimizeShoppingRoute('tej', 47.123, 19.456);
 
-    expect(global.fetch).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/optimize`, {
+    expect(global.fetch).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_API_URL || 'https://localhost:8080'}/api/v1/optimize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,7 +47,7 @@ describe('optimizeShoppingRoute', () => {
 
   it('successfully uses EXPO_PUBLIC_API_URL environment variable', async () => {
     const originalEnv = process.env.EXPO_PUBLIC_API_URL;
-    process.env.EXPO_PUBLIC_API_URL = 'http://api.example.com';
+    process.env.EXPO_PUBLIC_API_URL = 'https://api.example.com';
 
     const mockResponseData: OptimizeResponse = {
       route_plan: { steps: [] },
@@ -61,7 +61,7 @@ describe('optimizeShoppingRoute', () => {
 
     await optimizeShoppingRoute('tej', 47.123, 19.456);
 
-    expect(global.fetch).toHaveBeenCalledWith('http://api.example.com/api/v1/optimize', expect.any(Object));
+    expect(global.fetch).toHaveBeenCalledWith('https://api.example.com/api/v1/optimize', expect.any(Object));
 
     // Restore
     process.env.EXPO_PUBLIC_API_URL = originalEnv;
