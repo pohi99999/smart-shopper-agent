@@ -8,6 +8,7 @@ export interface Coordinate {
 export interface RouteStep {
   shop_name: string;
   items: string[];
+  coordinates: Coordinate;
 }
 
 export interface RoutePlan {

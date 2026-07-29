@@ -77,9 +77,14 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 		items = append(items, item.Name)
 	}
 
+	bestShopCoords := destinations[bestShop]
 	step := models.RouteStep{
 		ShopName: bestShop,
 		Items:    items,
+		Coordinates: models.Coordinates{
+			Latitude:  bestShopCoords.Latitude,
+			Longitude: bestShopCoords.Longitude,
+		},
 	}
 
 	return models.RoutePlan{

@@ -15,6 +15,7 @@ describe('optimizeShoppingRoute', () => {
           {
             shop_name: 'Aldi',
             items: ['tej'],
+            coordinates: { latitude: 46.8451, longitude: 16.8455 }
           },
         ],
       },

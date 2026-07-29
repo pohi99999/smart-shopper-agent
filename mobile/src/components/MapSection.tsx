@@ -3,11 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { OptimizeResponse, Coordinate } from '../services/api';
 
-const SHOP_COORDINATES: { [key: string]: { latitude: number; longitude: number } } = {
-  'Aldi': { latitude: 46.8451, longitude: 16.8455 },
-  'Interspar': { latitude: 46.8413, longitude: 16.8521 },
-};
-
 interface MapSectionProps {
   coords: Coordinate | null;
   result: OptimizeResponse | null;
@@ -38,12 +33,11 @@ export function MapSection({ coords, result }: MapSectionProps) {
         )}
         {result &&
           result.route_plan.steps.map((step, index) => {
-            const shopCoords = SHOP_COORDINATES[step.shop_name];
-            if (!shopCoords) return null;
+            if (!step.coordinates) return null;
             return (
               <Marker
                 key={index}
-                coordinate={shopCoords}
+                coordinate={step.coordinates}
                 title={`${index + 1}. állomás: ${step.shop_name}`}
                 description={step.items.join(', ')}
                 pinColor="red"
