@@ -3,6 +3,7 @@ package agents
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -180,5 +181,32 @@ func TestNewParser(t *testing.T) {
 	expectedURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 	if parser.APIURL != expectedURL {
 		t.Errorf("Expected APIURL %q, got %q", expectedURL, parser.APIURL)
+	}
+}
+
+func TestParser_Parse_NetworkError(t *testing.T) {
+	originalAPIKey := os.Getenv("GEMINI_API_KEY")
+	os.Setenv("GEMINI_API_KEY", "dummy_key")
+	defer os.Setenv("GEMINI_API_KEY", originalAPIKey)
+
+	originalTransport := http.DefaultTransport
+	http.DefaultTransport = &mockTransport{
+		roundTripFunc: func(req *http.Request) (*http.Response, error) {
+			return nil, errors.New("simulated network error")
+		},
+	}
+	defer func() { http.DefaultTransport = originalTransport }()
+
+	parser := NewParser()
+
+	// Fast fail for retries
+	parser.Client.Timeout = 1 * time.Millisecond
+
+	_, err := parser.Parse("buy 1 milk")
+	if err == nil {
+		t.Fatalf("Expected an error due to network failure, got nil")
+	}
+	if !strings.Contains(err.Error(), "Gemini API network error") {
+		t.Errorf("Expected 'Gemini API network error', got %v", err)
 	}
 }
