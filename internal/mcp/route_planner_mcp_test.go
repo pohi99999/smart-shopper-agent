@@ -3,6 +3,7 @@ package mcp
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -128,4 +129,46 @@ func TestRoutePlanner_CalculateRouteMatrixEmpty(t *testing.T) {
 	if len(resp) != 0 {
 		t.Errorf("Expected 0 responses, got %d", len(resp))
 	}
+}
+
+func TestRoutePlanner_CalculateRouteMatrix_ErrorResponses(t *testing.T) {
+	req := RouteMatrixRequest{
+		Source: Coordinates{Latitude: 46.84, Longitude: 16.84},
+		Destinations: map[string]Coordinates{
+			"Shop1": {Latitude: 46.85, Longitude: 16.85},
+		},
+	}
+
+	t.Run("Non-200 HTTP status", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+
+		rp := NewRoutePlanner()
+		rp.baseURL = server.URL
+
+		_, err := rp.CalculateRouteMatrix(req)
+		if err == nil {
+			t.Fatal("Expected error for non-200 status code, got nil")
+		}
+
+		expectedErrMsg := "OSRM API returned status: 500 Internal Server Error"
+		if err.Error() != expectedErrMsg {
+			t.Errorf("Expected error %q, got %q", expectedErrMsg, err.Error())
+		}
+	})
+
+	t.Run("Connection error", func(t *testing.T) {
+		rp := NewRoutePlanner()
+		rp.baseURL = "http://127.0.0.1:0"
+
+		_, err := rp.CalculateRouteMatrix(req)
+		if err == nil {
+			t.Fatal("Expected connection error, got nil")
+		}
+		if !strings.Contains(err.Error(), "OSRM API timeout or connection error") {
+			t.Errorf("Expected error to contain 'OSRM API timeout or connection error', got %q", err.Error())
+		}
+	})
 }
