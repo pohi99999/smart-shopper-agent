@@ -403,4 +403,22 @@ A 28. fázis záró mérföldkövében átvizsgálásra, tesztelésre és bizton
 - A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
 - A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`), és a beolvasztott 8 távoli Jules feature ág törlésre került.
 
+## 28. Fázis: Jules Aszinkron Fejlesztéseinek, Biztonsági és Teljesítmény-Optimalizációs Ágainak Teljes Integrációja (2026-07-29)
+
+A 28. fázis 2026-07-29-i integrációs mérföldkövében átvizsgálásra, tesztelésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules 6 legújabb távoli háttérágában végzett fejlesztései, feloldva az esetleges merge konfliktusokat és garantálva a 100%-os tesztstabilitást.
+
+### Beépített Fejlesztések, Optimalizációk és Biztonsági Javítások
+- **HTTPS API URL Fallback (`fix-api-url-https-12211234181809931015`):** A [mobile/src/services/api.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.ts) és a kapcsolódó [api.test.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.test.ts) unit tesztek frissítésre kerültek, hogy a bedrótozott fallback URL a biztonságos `https://localhost:8080` címet használja a man-in-the-middle (MITM) támadások elleni védelem jegyében.
+- **Kéréstörzs Méretkorlát DoS Védelem (`fix-optimize-dos-vulnerability-16247846184733920946`):** Az [internal/api/handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) `OptimizeHandler` metódusa kiegészült `r.Body = http.MaxBytesReader(w, r.Body, 1048576)` korlátozással (1 MB max payload), megelőzve a memóriaterheléses DoS támadásokat.
+- **n8n Munkafolyamat Titok-védelem (`fix/n8n-hardcoded-secret-14474938347883854760`):** Az [internal/automation/n8n_price_updater_workflow.json](file:///Z:/001_Workspace/smart-shopper-agent/internal/automation/n8n_price_updater_workflow.json) automatizációs blueprintben a beégetett `X-Admin-Token` felváltásra került a dinamikus `={{ $env.ADMIN_TOKEN }}` környezeti változóval.
+- **Szálbiztos Termékár Gyorsítótár (`perf-optimize-prices-cache-8316239349925599447`):** Az [APIHandler](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) kiegészült egy `sync.RWMutex`-szel védett in-memory `pricesCache` gyorsítótárral és a `getPricesData()` metódussal, megszüntetve az admin árlekérdezések és frissítések felesleges lemezolvasási overhead-jét. Elkészült a [handlers_bench_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_bench_test.go) benchmark teszt is.
+- **Rate Limiter Háttér Ticker Tisztítás (`perf-optimize-rate-limiter-cleanup-18388368688046230916`):** Az [internal/api/middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) rate limiterje az inline, kérésenkénti tisztítás helyett egy háttérben futó goroutine-ban (`runCleanup()`, percenkénti tickerrel és kivezetett `Stop()` metódussal) távolítja el az elavult IP látogatókat, megszüntetve a mutex lezárási várakozásokat.
+- **Dependabot Függőségi Frissítések (`dependabot/npm_and_yarn/mobile/npm_and_yarn-17a8159a2f`):** A [mobile/package-lock.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/package-lock.json) frissítésre került a `ws` csomag biztonsági és javító kiadásaival.
+
+### Tesztelés és Szinkronizáció
+- A Go backend unit és integrációs tesztek (`go test ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
+- A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`), és a beolvasztott 6 távoli Jules feature ág törlésre került.
+
+
 
