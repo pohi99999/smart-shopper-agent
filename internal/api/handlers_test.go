@@ -1,12 +1,12 @@
 package api
 
 import (
-	"smart-shopper-agent/internal/utils"
-"bytes"
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"smart-shopper-agent/internal/utils"
 	"testing"
 
 	"smart-shopper-agent/internal/agents"
