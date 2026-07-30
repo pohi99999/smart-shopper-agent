@@ -420,5 +420,30 @@ A 28. fázis 2026-07-29-i integrációs mérföldkövében átvizsgálásra, tes
 - A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
 - A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`), és a beolvasztott 6 távoli Jules feature ág törlésre került.
 
+## 28. Fázis: Jules Legújabb Aszinkron Fejlesztéseinek és Tesztjeinek Integrálása (2026-07-30)
+
+A 28. fázis 2026-07-30-i integrációs mérföldkövében átvizsgálásra, tesztelésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules 5 legújabb távoli háttérágában végzett fejlesztései és tesztjei, feloldva az esetleges merge konfliktusokat és garantálva a 100%-os tesztstabilitást.
+
+### Beépített Fejlesztések, Optimalizációk és Biztonsági Javítások
+- **Térképes Koordináták Dinamikus Integrációja és Típusbővítés (`code-health-map-coordinates-3199871987413650016`):**
+  - Az [internal/models/shopping.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/models/shopping.go) backend `RouteStep` struktúrája és a [mobile/src/services/api.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.ts) frontend `RouteStep` TypeScript interfésze kiegészült a `Coordinates` mezővel.
+  - Az [internal/agents/optimizer.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/optimizer.go) ágens átadásra került a boltok GPS koordinátáinak továbbítása az útvonal lépéseinél.
+  - A [mobile/src/components/MapSection.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/components/MapSection.tsx) komponensből eltávolításra kerültek a beégetett `SHOP_COORDINATES` értékek, és dinamikusan a válaszban érkező step koordinátákat használja.
+  - A frontend tesztek ([mobile/src/services/api.test.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.test.ts)) frissítésre kerültek az új koordináta mező támogatására.
+- **Parser Hálózati Hiba Tesztelés (`jules-7054892690131222807-e13c6aee`):**
+  - Az [internal/agents/parser_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/parser_test.go) kiegészült a `TestParser_Parse_NetworkError` teszttel, a Gemini API hálózati hibáinak és hibátűrésének ellenőrzésére.
+- **RateLimiter Manuális Tisztítás Tesztelése (`jules-testing-ratelimit-cleanup-8034225805795278314`):**
+  - Az [internal/api/middleware_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_test.go) kiegészült a `TestRateLimiterCleanup` teszttel a háttér tisztító rutin működésének közvetlen tesztelésére.
+- **OSRM API Timeout Tesztlefedettség (`test/add-osrm-api-timeout-test-15429010603880515350`):**
+  - Az [internal/mcp/route_planner_mcp_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/route_planner_mcp_test.go) kiegészült az OSRM API hálózati időtúllépésének (Timeout error) unit tesztjével.
+- **OSRM Mátrix Számítás Hibaág Tesztelése (`test/osrm-matrix-timeout-coverage-4902409608944664682`):**
+  - Az [internal/mcp/route_planner_mcp_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/route_planner_mcp_test.go) kiegészült a `TestRoutePlanner_CalculateRouteMatrix_ErrorResponses` teszttel (nem-200 HTTP válasz és kapcsolat megszakadás hibaágak lefedésére).
+
+### Tesztelés és Szinkronizáció
+- A Go backend unit és integrációs tesztek (`go test ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
+- A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`), és a beolvasztott 5 távoli Jules feature ág törlésre került.
+
+
 
 
