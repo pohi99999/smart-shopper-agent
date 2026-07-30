@@ -1,8 +1,10 @@
 package mcp
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -69,6 +71,22 @@ func TestRoutePlanner_ErrorResponses(t *testing.T) {
 			t.Fatal("Expected connection error, got nil")
 		}
 	})
+
+	t.Run("Timeout error", func(t *testing.T) {
+		rp := NewRoutePlanner()
+		rp.client.Transport = &errorTransport{}
+
+		_, err := rp.CalculateRoute(req)
+		if err == nil {
+			t.Fatal("Expected timeout error, got nil")
+		}
+
+		expectedErrMsgPrefix := "OSRM API timeout or connection error"
+		if !strings.HasPrefix(err.Error(), expectedErrMsgPrefix) {
+			t.Errorf("Expected error to start with %q, got %q", expectedErrMsgPrefix, err.Error())
+		}
+	})
+
 }
 
 func TestRoutePlanner_CalculateRouteMatrix(t *testing.T) {
@@ -128,4 +146,10 @@ func TestRoutePlanner_CalculateRouteMatrixEmpty(t *testing.T) {
 	if len(resp) != 0 {
 		t.Errorf("Expected 0 responses, got %d", len(resp))
 	}
+}
+
+type errorTransport struct{}
+
+func (t *errorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return nil, errors.New("mock timeout error")
 }
