@@ -330,3 +330,47 @@ func TestLoadTrustedProxies(t *testing.T) {
 		})
 	}
 }
+
+func TestRateLimiterCleanup(t *testing.T) {
+	// Create a new rate limiter
+	rl := NewRateLimiter(rate.Every(time.Minute/10), 1)
+	// Stop the background cleanup routine immediately so we can test it manually
+	rl.Stop()
+
+	now := time.Now()
+
+	// Manually populate the visitors map
+	rl.mu.Lock()
+	rl.visitors["recent"] = &visitor{
+		limiter:  rate.NewLimiter(rl.rate, rl.burst),
+		lastSeen: now,
+	}
+	rl.visitors["old"] = &visitor{
+		limiter:  rate.NewLimiter(rl.rate, rl.burst),
+		lastSeen: now.Add(-4 * time.Minute),
+	}
+	rl.visitors["boundary"] = &visitor{
+		limiter:  rate.NewLimiter(rl.rate, rl.burst),
+		lastSeen: now.Add(-2 * time.Minute),
+	}
+	rl.mu.Unlock()
+
+	// Run cleanup manually
+	rl.cleanup()
+
+	// Verify results
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	if _, exists := rl.visitors["recent"]; !exists {
+		t.Errorf("Expected 'recent' visitor to still exist, but it was deleted")
+	}
+
+	if _, exists := rl.visitors["boundary"]; !exists {
+		t.Errorf("Expected 'boundary' visitor to still exist, but it was deleted")
+	}
+
+	if _, exists := rl.visitors["old"]; exists {
+		t.Errorf("Expected 'old' visitor to be deleted, but it still exists")
+	}
+}
