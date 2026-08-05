@@ -131,7 +131,6 @@ async function main() {
   console.log('🧪  Smart Shopper – Webhook Simulation Test');
   console.log('──────────────────────────────────────────');
   console.log(`🎯  Target : ${TARGET_URL}`);
-  console.log(`🔑  Token  : ${ADMIN_TOKEN.slice(0, 6)}${'*'.repeat(Math.max(0, ADMIN_TOKEN.length - 6))}`);
   console.log('\n📦  Test payload:');
   console.log(JSON.stringify(TEST_PRICES, null, 2));
 
