@@ -30,7 +30,7 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 	minCost := -1.0
 
 	// Gather all destinations
-	destinations := make(map[string]mcp.Coordinates)
+	destinations := make(map[string]mcp.Coordinates, len(prices))
 	for shopName := range prices {
 		coords, err := o.scraper.GetShopCoordinates(shopName)
 		if err != nil {
