@@ -158,6 +158,24 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool {
+	if h.adminToken == "" {
+		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
+		return false
+	}
+
+	token := r.Header.Get("X-Admin-Token")
+	expectedTokenHash := sha256.Sum256([]byte(h.adminToken))
+	providedTokenHash := sha256.Sum256([]byte(token))
+
+	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
+		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return false
+	}
+
+	return true
+}
+
 // AdminPricesGetHandler godoc
 // @Summary Fetch shop prices
 // @Description Fetches shop prices. Requires an X-Admin-Token header.
@@ -169,17 +187,7 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [get]
 func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Request) {
-	if h.adminToken == "" {
-		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
-		return
-	}
-
-	token := r.Header.Get("X-Admin-Token")
-	expectedTokenHash := sha256.Sum256([]byte(h.adminToken))
-	providedTokenHash := sha256.Sum256([]byte(token))
-
-	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
-		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+	if !h.checkAdminAuth(w, r) {
 		return
 	}
 
@@ -214,17 +222,7 @@ func (h *APIHandler) AdminPricesGetHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 500 {object} ErrorResponse
 // @Router /admin/prices [post]
 func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Request) {
-	if h.adminToken == "" {
-		SendJSONError(w, "Server configuration error", http.StatusInternalServerError)
-		return
-	}
-
-	token := r.Header.Get("X-Admin-Token")
-	expectedTokenHash := sha256.Sum256([]byte(h.adminToken))
-	providedTokenHash := sha256.Sum256([]byte(token))
-
-	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
-		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+	if !h.checkAdminAuth(w, r) {
 		return
 	}
 
