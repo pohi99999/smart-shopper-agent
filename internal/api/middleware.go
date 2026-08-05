@@ -168,22 +168,19 @@ func GetClientIP(r *http.Request) string {
 	forwarded := r.Header.Get("X-Forwarded-For")
 	if forwarded != "" {
 		ips := strings.Split(forwarded, ",")
+		var firstValid string
 		for i := len(ips) - 1; i >= 0; i-- {
 			part := strings.TrimSpace(ips[i])
 			parsed := net.ParseIP(part)
 			if parsed != nil {
-				if parsed.IsPrivate() || parsed.IsLoopback() {
-					continue
+				if !parsed.IsPrivate() && !parsed.IsLoopback() {
+					return part
 				}
-				return part
+				firstValid = part
 			}
 		}
-		for _, ipStr := range ips {
-			part := strings.TrimSpace(ipStr)
-			parsed := net.ParseIP(part)
-			if parsed != nil {
-				return part
-			}
+		if firstValid != "" {
+			return firstValid
 		}
 	}
 	return ip
