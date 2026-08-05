@@ -14,6 +14,8 @@ import (
 	"sync"
 )
 
+const maxRequestBodyBytes = 1048576
+
 type APIHandler struct {
 	parser         *agents.Parser
 	pricer         *agents.Pricer
@@ -106,7 +108,7 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
 	var req OptimizeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		SendJSONError(w, "Invalid request body", http.StatusBadRequest)
@@ -228,7 +230,7 @@ func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		SendJSONError(w, "Failed to read request body", http.StatusBadRequest)
