@@ -37,11 +37,11 @@ func setupMux() *http.ServeMux {
 	apiHandler := api.NewAPIHandler(parser, pricer, optimizer)
 
 	// Combine Middlewares
-	// Both endpoints need security headers, but optimize also needs rate limiting
+	// All endpoints need security headers and rate limiting
 
 	optimizeHandler := api.SecurityHeadersMiddleware(api.RateLimitMiddleware(apiHandler.OptimizeHandler))
-	adminPricesGetHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesGetHandler)
-	adminPricesPostHandler := api.SecurityHeadersMiddleware(apiHandler.AdminPricesPostHandler)
+	adminPricesGetHandler := api.SecurityHeadersMiddleware(api.RateLimitMiddleware(apiHandler.AdminPricesGetHandler))
+	adminPricesPostHandler := api.SecurityHeadersMiddleware(api.RateLimitMiddleware(apiHandler.AdminPricesPostHandler))
 
 	// 4. Register route
 	mux.HandleFunc("/api/v1/optimize", optimizeHandler)
