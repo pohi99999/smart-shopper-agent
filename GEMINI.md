@@ -444,6 +444,36 @@ A 28. fázis 2026-07-30-i integrációs mérföldkövében átvizsgálásra, tes
 - A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
 - A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`), és a beolvasztott 5 távoli Jules feature ág törlésre került.
 
+## 28. Fázis: Jules Aszinkron Fejlesztéseinek, Biztonsági és Teljesítmény-Optimalizációs Ágainak Teljes Integrációja (2026-08-06)
+
+A 28. fázis 2026-08-06-i integrációs mérföldkövében átvizsgálásra, tesztelésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules 9 legújabb távoli háttérágában végzett fejlesztései, javításai és tesztjei, feloldva az esetleges merge konfliktusokat és garantálva a 100%-os tesztstabilitást.
+
+### Beépített Fejlesztések, Optimalizációk és Biztonsági Javítások
+- **Konstans Kéréstörzs Méretkorlát (`fix-hardcoded-json-limit-83835230744191116`):**
+  - Az [internal/api/handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) fájlban a beégetett `1048576` bájtolvasási korlát kivezetésre került a `maxRequestBodyBytes` konstansba az `OptimizeHandler` és `AdminPricesPostHandler` metódusoknál.
+- **Benchmark Teszt Refaktorálás (`fix-string-concat-bench-15726895469599423671`):**
+  - Az [internal/mcp/route_planner_mcp_bench_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/route_planner_mcp_bench_test.go) fájlban az elavult URL építési teszt törlésre került, megtartva a letisztult `BenchmarkCalculateRouteMatrix_URLBuilding` benchmark tesztet.
+- **Admin Auth Segédfüggvény Kiszervezése (`fix/extract-admin-auth-helper-923025390536711556`):**
+  - Az [internal/api/handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) fájlban a duplikált adminisztrátori token ellenőrzési logika kiszervezésre került a közös `checkAdminAuth(w, r)` metódusba a DRY kódalapelv szerint.
+- **Optimizer Célállomások Térkép Memória Előfoglalása (`jules-13069500410164552067-dc1c08c2`):**
+  - Az [internal/agents/optimizer.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/optimizer.go) fájlban a `destinations` térkép inicializálása `make(map[string]mcp.Coordinates, len(prices))` módon történik, csökkentve a felesleges memória reallokációkat.
+- **Admin Token Maszkolási Biztonsági Javítás (`jules-14424799241084243198-5b53e7f2`):**
+  - A [scripts/simulate_webhook.js](file:///Z:/001_Workspace/smart-shopper-agent/scripts/simulate_webhook.js) szkriptből eltávolításra került az ADMIN_TOKEN részleges (első 6 karakter) kiírása a konzolra a véletlen token szivárgás elkerülésére.
+- **Előre Számított Admin Token Hash Gyorsítótárazása (`jules-3382827411916313515-92246934`):**
+  - Az [APIHandler](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) inicializálásakor kiszámításra és eltárolásra kerül az `adminTokenHash` ([32]byte), elkerülve a redundáns SHA-256 hash számítást minden egyes admin API kérésnél (~41%-os teljesítménynövekedés).
+- **GetClientIP Egy-Lépéses Teljesítmény-Optimalizálás (`perf-getclientip-8665928029508344271`):**
+  - Az [internal/api/middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) `GetClientIP` függvénye átírásra került, elkerülve a `X-Forwarded-For` IP-k kétszeres feldolgozását, kiegészítve a [middleware_bench_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_bench_test.go) benchmark teszttel.
+- **Admin Végpontok Rate Limiting Védelme (`security-fix-admin-rate-limiting-9704215335051288245`):**
+  - A [cmd/app/main.go](file:///Z:/001_Workspace/smart-shopper-agent/cmd/app/main.go) fájlban az `/api/v1/admin/prices` GET és POST végpontok is megkapták a `RateLimitMiddleware` védelmet a nyerserő (brute-force) DoS támadások kivédésére.
+- **Dependabot Függőségi Biztonsági Frissítés (`dependabot/npm_and_yarn/mobile/npm_and_yarn-84557ebc70`):**
+  - A [mobile/package-lock.json](file:///Z:/001_Workspace/smart-shopper-agent/mobile/package-lock.json) fájlban frissítésre került a `brace-expansion` csomag a legújabb biztonságos kiadásokra (`1.1.18` és `5.0.9`).
+
+### Tesztelés és Szinkronizáció
+- A Go backend unit és integrációs tesztek (`go test ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
+- A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`).
+
+
 
 
 
