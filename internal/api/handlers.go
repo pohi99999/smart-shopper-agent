@@ -21,6 +21,7 @@ type APIHandler struct {
 	pricer         *agents.Pricer
 	optimizer      *agents.Optimizer
 	adminToken     string
+	adminTokenHash [32]byte
 	pricesCache    interface{}
 	pricesCacheMut sync.RWMutex
 }
@@ -30,7 +31,8 @@ func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agen
 		parser:     parser,
 		pricer:     pricer,
 		optimizer:  optimizer,
-		adminToken: os.Getenv("ADMIN_TOKEN"),
+		adminToken:     os.Getenv("ADMIN_TOKEN"),
+		adminTokenHash: sha256.Sum256([]byte(os.Getenv("ADMIN_TOKEN"))),
 	}
 }
 
@@ -167,10 +169,9 @@ func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	expectedTokenHash := sha256.Sum256([]byte(h.adminToken))
 	providedTokenHash := sha256.Sum256([]byte(token))
 
-	if subtle.ConstantTimeCompare(providedTokenHash[:], expectedTokenHash[:]) != 1 {
+	if subtle.ConstantTimeCompare(providedTokenHash[:], h.adminTokenHash[:]) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
