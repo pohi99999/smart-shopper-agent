@@ -473,6 +473,35 @@ A 28. fázis 2026-08-06-i integrációs mérföldkövében átvizsgálásra, tes
 - A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
 - A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`).
 
+## 28. Fázis: Jules Aszinkron Fejlesztéseinek, Biztonsági és Teljesítmény-Optimalizációs Ágainak Újabb Integrációja (2026-08-07)
+
+A 28. fázis 2026-08-07-i integrációs mérföldkövében átvizsgálásra, tesztelésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules 8 legújabb távoli háttérágában végzett fejlesztései, teljesítmény-optimalizációi és extra tesztjei, feloldva a merge konfliktusokat és garantálva a 100%-os tesztstabilitást.
+
+### Beépített Fejlesztések, Optimalizációk és Biztonsági Javítások
+- **Admin Autentikáció Teljesítmény-Optimalizálása (`jules-perf-optimize-auth-8035890038945783343`):**
+  - Az [internal/api/handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) `APIHandler` szerkezetében az admin token előre feldolgozva eltárolásra kerül `adminTokenBytes` formájában.
+  - Az admin kérések hitelesítése közvetlen hosszon és `subtle.ConstantTimeCompare` bajt-összehasonlítással történik, kiküszöbölve a kérésenkénti redundáns SHA-256 hash-elést, megőrizve a timing attack védelmet és ~10x-es gyorsulást érve el.
+- **Rate Limiter Mutex Sharding Architektúra (`perf-shard-rate-limiter-12243300807671034908`):**
+  - Az [internal/api/middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) rate limiter látogatói (`visitors`) térképe sharding architektúrára lett átalakítva szegmentált `sync.RWMutex`-ekkel, elkerülve a globális mutex contention miatti késleltetési tüskéket magas terhelés mellett.
+- **n8n Ingest API Árfrissítés JSON Validáció (`fix-prices-json-validation-8976359161183264921`):**
+  - Az [internal/api/handlers.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers.go) kiegészült a beérkező árfrissítések JSON szerkezetének szigorú ellenőrzésével a `prices.json` korrupciójának és érvénytelen adatstruktúrák elmentésének megelőzésére.
+- **Go Modul Függőségi Frissítés (`dependabot/go_modules/go_modules-57bd245098`):**
+  - A [go.mod](file:///Z:/001_Workspace/smart-shopper-agent/go.mod) és [go.sum](file:///Z:/001_Workspace/smart-shopper-agent/go.sum) fájlokban a `golang.org/x/net` modul frissítésre került a legújabb `v0.38.0` kiadásra.
+- **OptimizeHandler MethodNotAllowed Tesztlefedettség (`fix/optimize-handler-test-14303829774893989012`):**
+  - Az [internal/api/handlers_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_test.go) kiegészült a `TestOptimizeHandler_MethodNotAllowed` teszttel, amely verifikálja, hogy a `/api/v1/optimize` végpont nem-POST kérései 405 Method Not Allowed kóddal térnek vissza.
+- **getPricesData() Teljes Unit Tesztcsomag (`test-getpricesdata-5431612341860212402`):**
+  - Az [internal/api/handlers_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_test.go) kiegészült a `TestAPIHandler_getPricesData` unit teszttel, lefedve a gyorsítótár olvasási ágait (Cache Miss, Cache Hit, hiányzó fájl, érvénytelen JSON).
+- **isTrustedProxy() IP Ellenőrző Tesztlefedettség (`test-istrustedproxy-4258083492500419346`):**
+  - Az [internal/api/middleware_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_test.go) kiegészült a `TestIsTrustedProxy` unit teszttel, ellenőrizve a CIDR alhálózatokat, az egyedi IPv4/IPv6 címeket és az érvénytelen formátumokat.
+- **RateLimiter.Stop() Leállítási Teszt (`test-ratelimiter-stop-116340830404279847`):**
+  - Az [internal/api/middleware_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_test.go) kiegészült a `TestRateLimiterStop` teszttel, garantálva, hogy a rate limiter leállító csatornája megfelelően záródik le.
+
+### Tesztelés és Szinkronizáció
+- A Go backend unit és integrációs tesztek (`go test ./...`) 100%-osan zölden lefutottak (**PASS** mind az 5 csomagra).
+- A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
+- A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`).
+
+
 
 
 
