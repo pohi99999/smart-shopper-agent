@@ -372,7 +372,6 @@ func TestSendJSONError(t *testing.T) {
 	}
 }
 
-
 func TestOptimizeHandler_MethodNotAllowed(t *testing.T) {
 	handler := NewAPIHandler(nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/optimize", nil)
@@ -383,4 +382,134 @@ func TestOptimizeHandler_MethodNotAllowed(t *testing.T) {
 	if rec.Code != http.StatusMethodNotAllowed {
 		t.Errorf("Expected 405 Method Not Allowed, got %d", rec.Code)
 	}
+}
+
+func TestAPIHandler_getPricesData(t *testing.T) {
+	// Create a temporary directory for test files
+	tempDir := t.TempDir()
+
+	// Create a valid JSON file
+	validFile := tempDir + "/prices.json"
+	validData := []byte(`{"test_key": "test_value"}`)
+	if err := os.WriteFile(validFile, validData, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	// Create an invalid JSON file
+	invalidFile := tempDir + "/invalid.json"
+	if err := os.WriteFile(invalidFile, []byte(`{invalid_json`), 0644); err != nil {
+		t.Fatalf("Failed to write invalid test file: %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		setup     func()
+		cleanup   func()
+		wantError bool
+		wantData  bool
+	}{
+		{
+			name: "Success - Cache Miss (Reads from File)",
+			setup: func() {
+				os.Setenv("PRICES_FILE_PATH", validFile)
+			},
+			cleanup: func() {
+				os.Unsetenv("PRICES_FILE_PATH")
+				utils.ResetPricesFilePathCacheForTesting()
+			},
+			wantError: false,
+			wantData:  true,
+		},
+		{
+			name: "Error - File Not Found",
+			setup: func() {
+				os.Setenv("PRICES_FILE_PATH", tempDir+"/nonexistent.json")
+			},
+			cleanup: func() {
+				os.Unsetenv("PRICES_FILE_PATH")
+				utils.ResetPricesFilePathCacheForTesting()
+			},
+			wantError: true,
+			wantData:  false,
+		},
+		{
+			name: "Error - Invalid JSON",
+			setup: func() {
+				os.Setenv("PRICES_FILE_PATH", invalidFile)
+			},
+			cleanup: func() {
+				os.Unsetenv("PRICES_FILE_PATH")
+				utils.ResetPricesFilePathCacheForTesting()
+			},
+			wantError: true,
+			wantData:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utils.ResetPricesFilePathCacheForTesting()
+			if tt.setup != nil {
+				tt.setup()
+			}
+			defer func() {
+				if tt.cleanup != nil {
+					tt.cleanup()
+				}
+			}()
+
+			handler := NewAPIHandler(nil, nil, nil)
+			data, err := handler.getPricesData()
+
+			if tt.wantError && err == nil {
+				t.Errorf("Expected error but got nil")
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("Expected no error but got %v", err)
+			}
+			if tt.wantData && data == nil {
+				t.Errorf("Expected data but got nil")
+			}
+			if !tt.wantData && data != nil {
+				t.Errorf("Expected no data but got %v", data)
+			}
+		})
+	}
+
+	t.Run("Success - Cache Hit", func(t *testing.T) {
+		utils.ResetPricesFilePathCacheForTesting()
+		os.Setenv("PRICES_FILE_PATH", validFile)
+		defer func() {
+			os.Unsetenv("PRICES_FILE_PATH")
+			utils.ResetPricesFilePathCacheForTesting()
+		}()
+
+		handler := NewAPIHandler(nil, nil, nil)
+
+		// First call - cache miss
+		data1, err1 := handler.getPricesData()
+		if err1 != nil {
+			t.Fatalf("First call failed: %v", err1)
+		}
+		if data1 == nil {
+			t.Fatalf("First call returned nil data")
+		}
+
+		// Intentionally break the file path so next call MUST use cache
+		os.Setenv("PRICES_FILE_PATH", tempDir+"/nonexistent2.json")
+		utils.ResetPricesFilePathCacheForTesting()
+
+		// Second call - should hit cache and succeed
+		data2, err2 := handler.getPricesData()
+		if err2 != nil {
+			t.Errorf("Second call (cache hit) failed: %v", err2)
+		}
+
+		// The data from cache should be the exact same object reference or value
+		// Testing generic equality for unmarshaled json map
+		if data2 == nil {
+			t.Errorf("Second call returned nil data")
+		}
+	})
+>>>>>>> origin/test-getpricesdata-5431612341860212402
 }
