@@ -1,7 +1,6 @@
 package api
 
 import (
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
 	"io"
@@ -17,22 +16,22 @@ import (
 const maxRequestBodyBytes = 1048576
 
 type APIHandler struct {
-	parser         *agents.Parser
-	pricer         *agents.Pricer
-	optimizer      *agents.Optimizer
-	adminToken     string
-	adminTokenHash [32]byte
-	pricesCache    interface{}
-	pricesCacheMut sync.RWMutex
+	parser          *agents.Parser
+	pricer          *agents.Pricer
+	optimizer       *agents.Optimizer
+	adminToken      string
+	adminTokenBytes []byte
+	pricesCache     interface{}
+	pricesCacheMut  sync.RWMutex
 }
 
 func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agents.Optimizer) *APIHandler {
 	return &APIHandler{
-		parser:     parser,
-		pricer:     pricer,
-		optimizer:  optimizer,
-		adminToken:     os.Getenv("ADMIN_TOKEN"),
-		adminTokenHash: sha256.Sum256([]byte(os.Getenv("ADMIN_TOKEN"))),
+		parser:          parser,
+		pricer:          pricer,
+		optimizer:       optimizer,
+		adminToken:      os.Getenv("ADMIN_TOKEN"),
+		adminTokenBytes: []byte(os.Getenv("ADMIN_TOKEN")),
 	}
 }
 
@@ -169,9 +168,9 @@ func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	providedTokenHash := sha256.Sum256([]byte(token))
+	providedTokenBytes := []byte(token)
 
-	if subtle.ConstantTimeCompare(providedTokenHash[:], h.adminTokenHash[:]) != 1 {
+	if len(providedTokenBytes) != len(h.adminTokenBytes) || subtle.ConstantTimeCompare(providedTokenBytes, h.adminTokenBytes) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
