@@ -248,6 +248,18 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
 		}
 	})
+
+	t.Run("Request Body Too Large", func(t *testing.T) {
+		largeBody := make([]byte, 1048577) // 1MB + 1 byte
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(largeBody))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+	})
 }
 
 func TestOptimizeHandler_Integration(t *testing.T) {
@@ -357,5 +369,18 @@ func TestSendJSONError(t *testing.T) {
 
 	if errResp.Code != expectedStatusCode {
 		t.Errorf("Expected error code %d in JSON body, got %d", expectedStatusCode, errResp.Code)
+	}
+}
+
+
+func TestOptimizeHandler_MethodNotAllowed(t *testing.T) {
+	handler := NewAPIHandler(nil, nil, nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/optimize", nil)
+	rec := httptest.NewRecorder()
+
+	handler.OptimizeHandler(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected 405 Method Not Allowed, got %d", rec.Code)
 	}
 }
