@@ -1,0 +1,8 @@
+🎯 **What:**
+Added missing test coverage for `RateLimiter.Stop()`.
+
+📊 **Coverage:**
+The new test (`TestRateLimiterStop`) verifies that calling `Stop()` successfully closes the stop channel without panicking or blocking.
+
+✨ **Result:**
+Increased test coverage and confidence in the rate limiter's cleanup goroutine termination logic.
