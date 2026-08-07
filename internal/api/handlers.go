@@ -59,7 +59,7 @@ func (h *APIHandler) getPricesData() (interface{}, error) {
 		return nil, err
 	}
 
-	var data interface{}
+	var data map[string]mcp.ShopData
 	if err := json.Unmarshal(bodyBytes, &data); err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (h *APIHandler) AdminPricesPostHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var temp interface{}
+	var temp map[string]mcp.ShopData
 	if err := json.Unmarshal(bodyBytes, &temp); err != nil {
 		SendJSONError(w, "Invalid JSON body", http.StatusBadRequest)
 		return
