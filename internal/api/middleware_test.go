@@ -331,6 +331,22 @@ func TestLoadTrustedProxies(t *testing.T) {
 	}
 }
 
+
+func TestRateLimiterStop(t *testing.T) {
+	rl := NewRateLimiter(rate.Every(time.Minute), 1)
+
+	// Call Stop
+	rl.Stop()
+
+	// Verify the stop channel is closed by trying to read from it in a select block with default
+	select {
+	case <-rl.stop:
+		// Success, channel is closed and readable
+	default:
+		t.Fatal("Stop() did not close the stop channel")
+	}
+}
+
 func TestRateLimiterCleanup(t *testing.T) {
 	// Create a new rate limiter
 	rl := NewRateLimiter(rate.Every(time.Minute/10), 1)
