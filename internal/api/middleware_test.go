@@ -374,3 +374,67 @@ func TestRateLimiterCleanup(t *testing.T) {
 		t.Errorf("Expected 'old' visitor to be deleted, but it still exists")
 	}
 }
+
+func TestIsTrustedProxy(t *testing.T) {
+	// Save original env var to restore later
+	originalEnv := os.Getenv("TRUSTED_PROXIES")
+	defer func() {
+		os.Setenv("TRUSTED_PROXIES", originalEnv)
+		LoadTrustedProxies() // Restore original state
+	}()
+
+	// Setup trusted proxies for testing
+	os.Setenv("TRUSTED_PROXIES", "10.0.0.0/8, 192.168.1.100/32, 2001:db8::/32")
+	LoadTrustedProxies()
+
+	tests := []struct {
+		name     string
+		ip       string
+		expected bool
+	}{
+		{
+			name:     "IP within 10.0.0.0/8 subnet",
+			ip:       "10.1.2.3",
+			expected: true,
+		},
+		{
+			name:     "Exact IP match 192.168.1.100/32",
+			ip:       "192.168.1.100",
+			expected: true,
+		},
+		{
+			name:     "IPv6 within subnet",
+			ip:       "2001:db8::1",
+			expected: true,
+		},
+		{
+			name:     "IP outside trusted subnets",
+			ip:       "192.168.1.101",
+			expected: false,
+		},
+		{
+			name:     "Public IP outside trusted subnets",
+			ip:       "8.8.8.8",
+			expected: false,
+		},
+		{
+			name:     "Invalid IP string",
+			ip:       "invalid-ip",
+			expected: false,
+		},
+		{
+			name:     "Empty IP string",
+			ip:       "",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isTrustedProxy(tt.ip)
+			if result != tt.expected {
+				t.Errorf("isTrustedProxy(%q) = %v; want %v", tt.ip, result, tt.expected)
+			}
+		})
+	}
+}
