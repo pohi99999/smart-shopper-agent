@@ -17,22 +17,41 @@ type visitor struct {
 	lastSeen time.Time
 }
 
-// rateLimiter struct holds the limiters for different IP addresses
-type rateLimiter struct {
+const numShards = 32
+
+type rateLimiterShard struct {
 	visitors map[string]*visitor
 	mu       sync.Mutex
-	rate     rate.Limit
-	burst    int
-	stop     chan struct{}
+}
+
+// rateLimiter struct holds the limiters for different IP addresses
+type rateLimiter struct {
+	shards [numShards]*rateLimiterShard
+	rate   rate.Limit
+	burst  int
+	stop   chan struct{}
+}
+
+func getShardIndex(ip string) uint32 {
+	var hash uint32 = 2166136261
+	for i := 0; i < len(ip); i++ {
+		hash ^= uint32(ip[i])
+		hash *= 16777619
+	}
+	return hash % numShards
 }
 
 // NewRateLimiter creates a new rate limiter (10 requests per minute = ~0.16 req/sec)
 func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
 	rl := &rateLimiter{
-		visitors: make(map[string]*visitor),
-		rate:     r,
-		burst:    b,
-		stop:     make(chan struct{}),
+		rate:  r,
+		burst: b,
+		stop:  make(chan struct{}),
+	}
+	for i := 0; i < numShards; i++ {
+		rl.shards[i] = &rateLimiterShard{
+			visitors: make(map[string]*visitor),
+		}
 	}
 	go rl.runCleanup()
 	return rl
@@ -58,31 +77,35 @@ func (i *rateLimiter) Stop() {
 
 // getLimiter returns the limiter for the provided IP address
 func (i *rateLimiter) getLimiter(ip string) *rate.Limiter {
-	i.mu.Lock()
+	shard := i.shards[getShardIndex(ip)]
+	shard.mu.Lock()
 	now := time.Now()
 
-	v, exists := i.visitors[ip]
+	v, exists := shard.visitors[ip]
 	if !exists {
 		limiter := rate.NewLimiter(i.rate, i.burst)
 		v = &visitor{limiter: limiter, lastSeen: now}
-		i.visitors[ip] = v
+		shard.visitors[ip] = v
 	} else {
 		v.lastSeen = now
 	}
-	i.mu.Unlock()
+	shard.mu.Unlock()
 
 	return v.limiter
 }
 
 // cleanup removes old entries from the visitors map.
 func (i *rateLimiter) cleanup() {
-	i.mu.Lock()
-	defer i.mu.Unlock()
 	now := time.Now()
-	for ip, v := range i.visitors {
-		if now.Sub(v.lastSeen) > 3*time.Minute {
-			delete(i.visitors, ip)
+	for j := 0; j < numShards; j++ {
+		shard := i.shards[j]
+		shard.mu.Lock()
+		for ip, v := range shard.visitors {
+			if now.Sub(v.lastSeen) > 3*time.Minute {
+				delete(shard.visitors, ip)
+			}
 		}
+		shard.mu.Unlock()
 	}
 }
 

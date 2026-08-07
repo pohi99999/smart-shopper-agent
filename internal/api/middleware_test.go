@@ -339,38 +339,44 @@ func TestRateLimiterCleanup(t *testing.T) {
 
 	now := time.Now()
 
+	// Helper func to add a visitor
+	addVisitor := func(ip string, offset time.Duration) {
+		shard := rl.shards[getShardIndex(ip)]
+		shard.mu.Lock()
+		defer shard.mu.Unlock()
+		shard.visitors[ip] = &visitor{
+			limiter:  rate.NewLimiter(rl.rate, rl.burst),
+			lastSeen: now.Add(offset),
+		}
+	}
+
+	// Helper func to check if visitor exists
+	checkVisitor := func(ip string) bool {
+		shard := rl.shards[getShardIndex(ip)]
+		shard.mu.Lock()
+		defer shard.mu.Unlock()
+		_, exists := shard.visitors[ip]
+		return exists
+	}
+
 	// Manually populate the visitors map
-	rl.mu.Lock()
-	rl.visitors["recent"] = &visitor{
-		limiter:  rate.NewLimiter(rl.rate, rl.burst),
-		lastSeen: now,
-	}
-	rl.visitors["old"] = &visitor{
-		limiter:  rate.NewLimiter(rl.rate, rl.burst),
-		lastSeen: now.Add(-4 * time.Minute),
-	}
-	rl.visitors["boundary"] = &visitor{
-		limiter:  rate.NewLimiter(rl.rate, rl.burst),
-		lastSeen: now.Add(-2 * time.Minute),
-	}
-	rl.mu.Unlock()
+	addVisitor("recent", 0)
+	addVisitor("old", -4*time.Minute)
+	addVisitor("boundary", -2*time.Minute)
 
 	// Run cleanup manually
 	rl.cleanup()
 
 	// Verify results
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-
-	if _, exists := rl.visitors["recent"]; !exists {
+	if !checkVisitor("recent") {
 		t.Errorf("Expected 'recent' visitor to still exist, but it was deleted")
 	}
 
-	if _, exists := rl.visitors["boundary"]; !exists {
+	if !checkVisitor("boundary") {
 		t.Errorf("Expected 'boundary' visitor to still exist, but it was deleted")
 	}
 
-	if _, exists := rl.visitors["old"]; exists {
+	if checkVisitor("old") {
 		t.Errorf("Expected 'old' visitor to be deleted, but it still exists")
 	}
 }
