@@ -80,7 +80,7 @@ func TestAdminPricesHandler(t *testing.T) {
 		utils.ResetPricesFilePathCacheForTesting()
 		tempDir := t.TempDir()
 		filePath := tempDir + "/prices.json"
-		if err := os.WriteFile(filePath, []byte(`{"status": "success"}`), 0644); err != nil {
+		if err := os.WriteFile(filePath, []byte(`{"TestShop":{"coordinates":{"latitude":47.1234,"longitude":17.5678},"prices":{"tej":250}}}`), 0644); err != nil {
 			t.Fatalf("Failed to create temp prices.json: %v", err)
 		}
 
