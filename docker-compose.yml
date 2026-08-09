@@ -8,4 +8,4 @@ services:
     volumes:
       - ./internal/data/prices.json:/app/internal/data/prices.json
     environment:
-      - ADMIN_TOKEN=secret-admin-token-123
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
