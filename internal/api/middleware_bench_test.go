@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,6 +50,23 @@ func BenchmarkRateLimiter_Contention(b *testing.B) {
 			if i%100 == 0 {
 				rl.cleanup()
 			}
+		}
+	})
+}
+
+func BenchmarkIsTrustedProxy_Contention(b *testing.B) {
+	// Add some dummy trusted proxies
+	trustedProxiesCache.Store([]*net.IPNet{
+		{IP: net.ParseIP("10.0.0.0"), Mask: net.CIDRMask(8, 32)},
+		{IP: net.ParseIP("192.168.0.0"), Mask: net.CIDRMask(16, 32)},
+	})
+
+	ipStr := "192.168.1.1"
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			isTrustedProxy(ipStr)
 		}
 	})
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -112,8 +113,7 @@ func (i *rateLimiter) cleanup() {
 var limiter = NewRateLimiter(rate.Every(time.Minute/10), 10) // 10 requests per minute
 
 var (
-	trustedProxiesCache []*net.IPNet
-	trustedProxiesMu    sync.RWMutex
+	trustedProxiesCache atomic.Value // Stores []*net.IPNet
 )
 
 func init() {
@@ -155,9 +155,7 @@ func LoadTrustedProxies() {
 		}
 	}
 
-	trustedProxiesMu.Lock()
-	trustedProxiesCache = newCache
-	trustedProxiesMu.Unlock()
+	trustedProxiesCache.Store(newCache)
 }
 
 func isTrustedProxy(ip string) bool {
@@ -166,10 +164,12 @@ func isTrustedProxy(ip string) bool {
 		return false
 	}
 
-	trustedProxiesMu.RLock()
-	defer trustedProxiesMu.RUnlock()
+	cache, ok := trustedProxiesCache.Load().([]*net.IPNet)
+	if !ok {
+		return false
+	}
 
-	for _, ipNet := range trustedProxiesCache {
+	for _, ipNet := range cache {
 		if ipNet.Contains(clientIP) {
 			return true
 		}
