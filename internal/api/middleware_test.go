@@ -331,7 +331,6 @@ func TestLoadTrustedProxies(t *testing.T) {
 	}
 }
 
-
 func TestRateLimiterStop(t *testing.T) {
 	rl := NewRateLimiter(rate.Every(time.Minute), 1)
 
