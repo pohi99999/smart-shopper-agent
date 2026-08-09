@@ -390,7 +390,7 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 
 	// Create a valid JSON file
 	validFile := tempDir + "/prices.json"
-	validData := []byte(`{"test_key": "test_value"}`)
+	validData := []byte(`{"ShopA": {"coordinates": {"latitude": 47.1, "longitude": 19.1}, "prices": {"kenyér": 500}}}`)
 	if err := os.WriteFile(validFile, validData, 0644); err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
