@@ -25,7 +25,8 @@ type ShopData struct {
 }
 
 type PriceScraper struct {
-	shops map[string]ShopData
+	shops        map[string]ShopData
+	cachedChains []string
 }
 
 func NewPriceScraper() *PriceScraper {
@@ -40,6 +41,7 @@ func NewPriceScraper() *PriceScraper {
 		_ = json.Unmarshal(data, &ps.shops)
 	}
 
+	ps.updateCachedChains()
 	return ps
 }
 
@@ -79,14 +81,18 @@ func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error
 }
 
 func (ps *PriceScraper) GetShopChains() []string {
-	chains := make([]string, 0, len(ps.shops))
-	for chain := range ps.shops {
-		chains = append(chains, chain)
-	}
-	return chains
+	return ps.cachedChains
 }
 
 // SetShopsForTesting allows injecting shop data for testing purposes.
 func (ps *PriceScraper) SetShopsForTesting(shops map[string]ShopData) {
 	ps.shops = shops
+	ps.updateCachedChains()
+}
+
+func (ps *PriceScraper) updateCachedChains() {
+	ps.cachedChains = make([]string, 0, len(ps.shops))
+	for chain := range ps.shops {
+		ps.cachedChains = append(ps.cachedChains, chain)
+	}
 }
