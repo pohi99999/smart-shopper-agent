@@ -511,5 +511,4 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 			t.Errorf("Second call returned nil data")
 		}
 	})
->>>>>>> origin/test-getpricesdata-5431612341860212402
 }
