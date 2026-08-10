@@ -80,7 +80,6 @@ func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error
 	return shopData.Coordinates, nil
 }
 
-
 func (ps *PriceScraper) GetShopCoordinatesBulk(shopChains []string) (map[string]Coordinates, error) {
 	coords := make(map[string]Coordinates, len(shopChains))
 	for _, shopChain := range shopChains {

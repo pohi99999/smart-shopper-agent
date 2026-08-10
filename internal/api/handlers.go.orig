@@ -26,13 +26,12 @@ type APIHandler struct {
 }
 
 func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agents.Optimizer) *APIHandler {
-	adminToken := os.Getenv("ADMIN_TOKEN")
 	return &APIHandler{
 		parser:          parser,
 		pricer:          pricer,
 		optimizer:       optimizer,
-		adminToken:      adminToken,
-		adminTokenBytes: []byte(adminToken),
+		adminToken:      os.Getenv("ADMIN_TOKEN"),
+		adminTokenBytes: []byte(os.Getenv("ADMIN_TOKEN")),
 	}
 }
 
