@@ -547,5 +547,3 @@ func TestSendJSONError_ErrorPath(t *testing.T) {
 
 	// This test asserts nothing panic or crash when writing to connection fails
 }
-
-

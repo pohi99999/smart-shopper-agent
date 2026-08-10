@@ -1,8 +1,8 @@
 package agents
 
 import (
-	"testing"
 	"smart-shopper-agent/internal/mcp"
+	"testing"
 )
 
 func BenchmarkGatherDestinations_Iterative(b *testing.B) {
