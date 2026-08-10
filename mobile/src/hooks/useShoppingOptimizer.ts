@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { optimizeShoppingRoute, OptimizeResponse, Coordinate } from '../services/api';
+import { DEFAULT_LOCATION } from '../constants/location';
 
 const ASYNC_STORAGE_KEY = '@last_shopping_result';
 
@@ -46,8 +47,8 @@ export function useShoppingOptimizer() {
     setLoading(true);
     setResult(null);
 
-    let lat = 47.4979;
-    let lon = 19.0402;
+    let lat = DEFAULT_LOCATION.latitude;
+    let lon = DEFAULT_LOCATION.longitude;
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { OptimizeResponse, Coordinate } from '../services/api';
+import { DEFAULT_LOCATION } from '../constants/location';
 
 interface MapSectionProps {
   coords: Coordinate | null;
@@ -15,8 +16,8 @@ export function MapSection({ coords, result }: MapSectionProps) {
       <MapView
         style={styles.map}
         region={{
-          latitude: coords ? coords.latitude : 47.4979,
-          longitude: coords ? coords.longitude : 19.0402,
+          latitude: coords ? coords.latitude : DEFAULT_LOCATION.latitude,
+          longitude: coords ? coords.longitude : DEFAULT_LOCATION.longitude,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
