@@ -248,6 +248,15 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
 		}
+
+		var errResp ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("Failed to decode JSON error response: %v", err)
+		}
+
+		if errResp.Error != "Input too long" {
+			t.Errorf("Expected error message 'Input too long', got '%s'", errResp.Error)
+		}
 	})
 
 	t.Run("Request Body Too Large", func(t *testing.T) {
