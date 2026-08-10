@@ -247,6 +247,15 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
 		}
+
+		var errResp ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("Failed to decode JSON error response: %v", err)
+		}
+
+		if errResp.Error != "Input too long" {
+			t.Errorf("Expected error message 'Input too long', got '%s'", errResp.Error)
+		}
 	})
 
 	t.Run("Request Body Too Large", func(t *testing.T) {
@@ -390,7 +399,7 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 
 	// Create a valid JSON file
 	validFile := tempDir + "/prices.json"
-	validData := []byte(`{"test_key": "test_value"}`)
+	validData := []byte(`{"shop_a": {"coordinates": {"latitude": 1.0, "longitude": 1.0}, "prices": {"item": 10.0}}}`)
 	if err := os.WriteFile(validFile, validData, 0644); err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
@@ -511,5 +520,4 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 			t.Errorf("Second call returned nil data")
 		}
 	})
->>>>>>> origin/test-getpricesdata-5431612341860212402
 }
