@@ -8,7 +8,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"smart-shopper-agent/internal/utils"
+	"sync"
 	"testing"
+	"time"
 
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/mcp"
@@ -548,4 +550,44 @@ func TestSendJSONError_ErrorPath(t *testing.T) {
 	// This test asserts nothing panic or crash when writing to connection fails
 }
 
+func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
+	tempDir := t.TempDir()
 
+	validFile := tempDir + "/prices.json"
+	validData := []byte(`{"test_shop": {"coordinates": {"lat": 47.0, "lon": 19.0}, "prices": {"milk": 2.0}}}`)
+	if err := os.WriteFile(validFile, validData, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+	utils.ResetPricesFilePathCacheForTesting()
+	os.Setenv("PRICES_FILE_PATH", validFile)
+	defer func() {
+		os.Unsetenv("PRICES_FILE_PATH")
+		utils.ResetPricesFilePathCacheForTesting()
+	}()
+
+	handler := NewAPIHandler(nil, nil, nil)
+
+	var wg sync.WaitGroup
+
+	// Block all goroutines at the first RLock check by holding the WLock
+	handler.pricesCacheMut.Lock()
+
+	numGoroutines := 100
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			handler.getPricesData()
+		}()
+	}
+
+	// Give them time to start and block on RLock
+	time.Sleep(50 * time.Millisecond)
+
+	// Release WLock. They all acquire RLock, see cache is nil, release RLock, and request WLock.
+	// One wins, does file IO, sets cache.
+	// The rest get WLock later and hit the double check.
+	handler.pricesCacheMut.Unlock()
+
+	wg.Wait()
+}
