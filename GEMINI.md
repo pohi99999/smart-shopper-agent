@@ -501,6 +501,28 @@ A 28. fázis 2026-08-07-i integrációs mérföldkövében átvizsgálásra, tes
 - A React Native frontend unit tesztek (`npm test` a `mobile` könyvtárban) mind a 6 csomagra zöldek (**6/6 PASS, 17/17 teszt sikeres**).
 - A frissített `main` ág feltöltésre került a távoli GitHub tárolóba (`git push origin main`).
 
+### Jules Aszinkron Fejlesztéseinek, Biztonsági és Teljesítmény-Optimalizációs Ágainak Újabb Integrációja (2026-08-10)
+A 2026-08-10-i integrációs mérföldkőben átvizsgálásra, tesztelésre és biztonságosan beolvasztásra kerültek a `main` ágba Jules legújabb 9 távoli háttérágában végzett fejlesztései, teljesítmény-optimalizációi és extra unit/benchmark tesztjei:
+- **Keménykódolt Admin Token Titok Eltávolítása (`fix-hardcoded-admin-token-11875848722827249784`, `fix/hardcoded-admin-token-11988971129499949773`):**
+  - A [docker-compose.yml](file:///Z:/001_Workspace/smart-shopper-agent/docker-compose.yml) fájlból eltávolításra került a beégetett `ADMIN_TOKEN=secret123` érték, helyét dinamikus `${ADMIN_TOKEN}` környezeti változó vette át.
+- **Lock-free Trusted Proxy Gyorsítótár (`perf/trusted-proxy-atomic-cache-10298837284397980214`):**
+  - Az [internal/api/middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) fájlban a `trustedProxiesCache` átállításra került `atomic.Value` használatára a `sync.RWMutex` helyett, zármentes (lock-free) proxy IP ellenőrzést biztosítva.
+  - Kiegészült a `BenchmarkIsTrustedProxy_Contention` benchmark teszttel az [internal/api/middleware_bench_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware_bench_test.go) fájlban.
+- **GetClientIP Memóriafoglalás-mentes Optimalizálás (`perf/optimize-getclientip-allocations-2153241508376690175`):**
+  - Az [internal/api/middleware.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/middleware.go) `GetClientIP` függvénye optimalizálásra került, elkerülve a felesleges sztring szelet alokációkat.
+- **Tömeges Bolt Koordináta Lekérdezés Optimalizáció (`perf/n1-bulk-coordinates-9864129504478577039`):**
+  - Az [internal/mcp/price_scraper_mcp.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/price_scraper_mcp.go) kiegészült a bolt-koordináták tömeges lekérdezésének támogatásával, megszüntetve az N+1 lekérdezési overheadet.
+- **PriceScraper Bolt Lánc Gyorsítótárazás (`jules-7102121945814023265-6fefad3f`):**
+  - Az [internal/mcp/price_scraper_mcp.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/mcp/price_scraper_mcp.go) modulban bevezetésre került a bolt láncok memóriabeli gyorsítótárazása.
+- **LLM Parser Környezeti Változó Lekérdezés Optimalizálás (`perf/optimize-parser-getenv-4834298328662916392`):**
+  - Az [internal/agents/parser.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/parser.go) példányosításakor a `GEMINI_API_KEY` eltárolásra kerül a `Parser` struktúrában.
+  - Létrejött az [internal/agents/parser_benchmark_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/agents/parser_benchmark_test.go) a `BenchmarkParser_Parse_FastFail` benchmark teszttel.
+- **SendJSONError Hibafuttatási Ág Unit Teszt (`add-error-path-test-sendjsonerror-13207189470018447430`):**
+  - Az [internal/api/handlers_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_test.go) fájl kiegészült a `TestSendJSONError_ErrorPath` unit teszttel.
+- **Input Too Long Hibaüzenet Tesztlefedettség (`test-optimize-input-too-long-6534151555238467405`):**
+  - Az [internal/api/handlers_test.go](file:///Z:/001_Workspace/smart-shopper-agent/internal/api/handlers_test.go) kiegészült az `Input too long` hibaüzenetet verifikáló tesztesettel.
+
+
 
 
 
