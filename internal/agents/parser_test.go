@@ -28,6 +28,7 @@ func TestParser_Parse_MissingKey(t *testing.T) {
 	defer os.Setenv("GEMINI_API_KEY", originalAPIKey)
 
 	parser := NewParser()
+	parser.APIKey = ""
 
 	_, err := parser.Parse("veszek valamit")
 	if err == nil {
@@ -47,6 +48,7 @@ func TestParser_Parse_Live_Error(t *testing.T) {
 	defer os.Setenv("GEMINI_API_KEY", originalAPIKey)
 
 	parser := NewParser()
+	parser.APIKey = "invalid_fake_key_123"
 
 	_, err := parser.Parse("veszek valamit")
 	if err == nil {
@@ -70,6 +72,7 @@ func TestParser_Parse_Success(t *testing.T) {
 	})
 
 	parser := NewParser()
+	parser.APIKey = "test_mock_api_key"
 	parser.Client = mockClient
 
 	result, err := parser.Parse("buy 1 milk")
@@ -114,6 +117,7 @@ func TestParser_Parse_BadJSONResponse(t *testing.T) {
 	defer func() { http.DefaultTransport = originalTransport }()
 
 	parser := NewParser()
+	parser.APIKey = "dummy_key"
 
 	_, err := parser.Parse("veszek valamit")
 	if err == nil {
@@ -198,6 +202,7 @@ func TestParser_Parse_NetworkError(t *testing.T) {
 	defer func() { http.DefaultTransport = originalTransport }()
 
 	parser := NewParser()
+	parser.APIKey = "dummy_key"
 
 	// Fast fail for retries
 	parser.Client.Timeout = 1 * time.Millisecond

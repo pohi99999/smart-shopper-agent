@@ -17,6 +17,7 @@ const ParserSystemPrompt = "You are a shopping assistant parser that extracts sh
 type Parser struct {
 	Client *http.Client
 	APIURL string
+	APIKey string
 }
 
 func NewParser() *Parser {
@@ -24,6 +25,7 @@ func NewParser() *Parser {
 	return &Parser{
 		Client: &http.Client{Timeout: 10 * time.Second},
 		APIURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+		APIKey: os.Getenv("GEMINI_API_KEY"),
 	}
 }
 
@@ -104,7 +106,7 @@ func (p *Parser) doAttempt(client *http.Client, apiURL, apiKey string, jsonData 
 }
 
 func (p *Parser) Parse(input string) (models.ShoppingList, error) {
-	apiKey := os.Getenv("GEMINI_API_KEY")
+	apiKey := p.APIKey
 	if apiKey == "" || apiKey == "your_api_key_here" {
 		return models.ShoppingList{}, fmt.Errorf("GEMINI_API_KEY is not set or invalid")
 	}
