@@ -390,7 +390,7 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 
 	// Create a valid JSON file
 	validFile := tempDir + "/prices.json"
-	validData := []byte(`{"test_key": "test_value"}`)
+	validData := []byte(`{"test_shop": {"coordinates": {"lat": 47.0, "lon": 19.0}, "prices": {"milk": 2.0}}}`)
 	if err := os.WriteFile(validFile, validData, 0644); err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
@@ -511,5 +511,5 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 			t.Errorf("Second call returned nil data")
 		}
 	})
->>>>>>> origin/test-getpricesdata-5431612341860212402
 }
+
