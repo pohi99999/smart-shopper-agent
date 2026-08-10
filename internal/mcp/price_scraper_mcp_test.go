@@ -13,13 +13,12 @@ func BenchmarkGetShopCoordinates(b *testing.B) {
 }
 
 func TestGetShopCoordinates(t *testing.T) {
-	ps := &PriceScraper{
-		shops: map[string]ShopData{
-			"Aldi": {
-				Coordinates: Coordinates{Latitude: 46.8451, Longitude: 16.8455},
-			},
+	ps := &PriceScraper{}
+	ps.SetShopsForTesting(map[string]ShopData{
+		"Aldi": {
+			Coordinates: Coordinates{Latitude: 46.8451, Longitude: 16.8455},
 		},
-	}
+	})
 
 	tests := []struct {
 		name        string
@@ -65,17 +64,16 @@ func TestGetShopCoordinates(t *testing.T) {
 }
 
 func TestScrapePrices(t *testing.T) {
-	ps := &PriceScraper{
-		shops: map[string]ShopData{
-			"Spar": {
-				Coordinates: Coordinates{Latitude: 47.0, Longitude: 19.0},
-				Prices: map[string]float64{
-					"tej": 349.0,
-					"viz": 150.0,
-				},
+	ps := &PriceScraper{}
+	ps.SetShopsForTesting(map[string]ShopData{
+		"Spar": {
+			Coordinates: Coordinates{Latitude: 47.0, Longitude: 19.0},
+			Prices: map[string]float64{
+				"tej": 349.0,
+				"viz": 150.0,
 			},
 		},
-	}
+	})
 
 	tests := []struct {
 		name     string
@@ -168,13 +166,12 @@ func TestScrapePrices(t *testing.T) {
 }
 
 func TestGetShopChains(t *testing.T) {
-	ps := &PriceScraper{
-		shops: map[string]ShopData{
-			"Aldi":      {},
-			"Interspar": {},
-			"Tesco":     {},
-		},
-	}
+	ps := &PriceScraper{}
+	ps.SetShopsForTesting(map[string]ShopData{
+		"Aldi":      {},
+		"Interspar": {},
+		"Tesco":     {},
+	})
 
 	chains := ps.GetShopChains()
 	if len(chains) != 3 {
