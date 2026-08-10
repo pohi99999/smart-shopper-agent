@@ -80,6 +80,19 @@ func (ps *PriceScraper) GetShopCoordinates(shopChain string) (Coordinates, error
 	return shopData.Coordinates, nil
 }
 
+
+func (ps *PriceScraper) GetShopCoordinatesBulk(shopChains []string) (map[string]Coordinates, error) {
+	coords := make(map[string]Coordinates, len(shopChains))
+	for _, shopChain := range shopChains {
+		shopData, exists := ps.shops[shopChain]
+		if !exists {
+			return nil, fmt.Errorf("shop chain %s not found in database", shopChain)
+		}
+		coords[shopChain] = shopData.Coordinates
+	}
+	return coords, nil
+}
+
 func (ps *PriceScraper) GetShopChains() []string {
 	return ps.cachedChains
 }

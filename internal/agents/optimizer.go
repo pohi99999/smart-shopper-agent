@@ -30,13 +30,14 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 	minCost := -1.0
 
 	// Gather all destinations
-	destinations := make(map[string]mcp.Coordinates, len(prices))
+	shopNames := make([]string, 0, len(prices))
 	for shopName := range prices {
-		coords, err := o.scraper.GetShopCoordinates(shopName)
-		if err != nil {
-			return models.RoutePlan{}, err
-		}
-		destinations[shopName] = coords
+		shopNames = append(shopNames, shopName)
+	}
+
+	destinations, err := o.scraper.GetShopCoordinatesBulk(shopNames)
+	if err != nil {
+		return models.RoutePlan{}, err
 	}
 
 	matrixReq := mcp.RouteMatrixRequest{
