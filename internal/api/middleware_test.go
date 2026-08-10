@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -313,17 +314,16 @@ func TestLoadTrustedProxies(t *testing.T) {
 			os.Setenv("TRUSTED_PROXIES", tt.envVar)
 			LoadTrustedProxies()
 
-			trustedProxiesMu.RLock()
-			defer trustedProxiesMu.RUnlock()
+			cache, _ := trustedProxiesCache.Load().([]*net.IPNet)
 
-			if len(trustedProxiesCache) != tt.expectedLen {
-				t.Errorf("Expected cache length %d, got %d", tt.expectedLen, len(trustedProxiesCache))
+			if len(cache) != tt.expectedLen {
+				t.Errorf("Expected cache length %d, got %d", tt.expectedLen, len(cache))
 			}
 
 			if tt.expectedLen > 0 {
 				for i, expectedCIDR := range tt.expected {
-					if trustedProxiesCache[i].String() != expectedCIDR {
-						t.Errorf("Expected CIDR at index %d to be %s, got %s", i, expectedCIDR, trustedProxiesCache[i].String())
+					if cache[i].String() != expectedCIDR {
+						t.Errorf("Expected CIDR at index %d to be %s, got %s", i, expectedCIDR, cache[i].String())
 					}
 				}
 			}
