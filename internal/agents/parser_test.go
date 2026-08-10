@@ -215,3 +215,86 @@ func TestParser_Parse_NetworkError(t *testing.T) {
 		t.Errorf("Expected 'Gemini API network error', got %v", err)
 	}
 }
+
+func TestParser_doAttempt_BadURL(t *testing.T) {
+	parser := NewParser()
+	badURL := string([]byte{0x7f}) // Invalid control character for URL
+	_, err := parser.doAttempt(http.DefaultClient, badURL, "dummy_key", []byte(`{}`), 0)
+	if err == nil {
+		t.Fatalf("Expected an error due to invalid URL, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed to create HTTP request") {
+		t.Errorf("Expected 'failed to create HTTP request' error, got %v", err)
+	}
+}
+
+func TestParser_doAttempt_BadStatus(t *testing.T) {
+	mockClient := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(bytes.NewBufferString(`{}`)),
+			Header:     make(http.Header),
+		}
+	})
+
+	parser := NewParser()
+	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	if err == nil {
+		t.Fatalf("Expected an error due to bad status code, got nil")
+	}
+	if !strings.Contains(err.Error(), "API request failed with status code 500") {
+		t.Errorf("Expected 'API request failed with status code 500' error, got %v", err)
+	}
+}
+
+func TestParser_doAttempt_EmptyCandidates(t *testing.T) {
+	mockClient := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString(`{"candidates":[]}`)),
+			Header:     make(http.Header),
+		}
+	})
+
+	parser := NewParser()
+	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	if err == nil {
+		t.Fatalf("Expected an error due to empty candidates, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid or empty response from Gemini API") {
+		t.Errorf("Expected 'invalid or empty response from Gemini API' error, got %v", err)
+	}
+}
+
+func TestParser_doAttempt_BadShoppingListJSON(t *testing.T) {
+	mockClient := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString(`{"candidates":[{"content":{"parts":[{"text":"invalid_json"}]}}]}`)),
+			Header:     make(http.Header),
+		}
+	})
+
+	parser := NewParser()
+	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	if err == nil {
+		t.Fatalf("Expected an error due to bad shopping list JSON, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed to parse shopping list JSON") {
+		t.Errorf("Expected 'failed to parse shopping list JSON' error, got %v", err)
+	}
+}
+
+func TestParser_Parse_DefaultClientAndURL(t *testing.T) {
+	parser := NewParser()
+	parser.Client = nil
+	parser.APIURL = ""
+
+	// We'll give it a fake key so it fails on auth if it gets that far.
+	parser.APIKey = "fake_key_for_defaults"
+
+	_, err := parser.Parse("veszek valamit")
+	if err == nil {
+		t.Fatalf("Expected an error due to fake key or network, got nil")
+	}
+}
