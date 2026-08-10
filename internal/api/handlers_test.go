@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -512,4 +513,30 @@ func TestAPIHandler_getPricesData(t *testing.T) {
 		}
 	})
 }
+
+type failingResponseWriter struct {
+	http.ResponseWriter
+}
+
+func (w *failingResponseWriter) Write(b []byte) (int, error) {
+	return 0, errors.New("write error")
+}
+
+func (w *failingResponseWriter) Header() http.Header {
+	return make(http.Header)
+}
+
+func (w *failingResponseWriter) WriteHeader(statusCode int) {
+}
+
+func TestSendJSONError_ErrorPath(t *testing.T) {
+	// Create a response writer that fails on write
+	w := &failingResponseWriter{}
+
+	// Call the function
+	SendJSONError(w, "Test Error", http.StatusInternalServerError)
+
+	// This test asserts nothing panic or crash when writing to connection fails
+}
+
 
