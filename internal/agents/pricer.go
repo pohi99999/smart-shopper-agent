@@ -26,24 +26,43 @@ func (pr *Pricer) GetPrices(list models.ShoppingList) (map[string]float64, error
 		productNames[i] = item.Name
 	}
 
-	for _, chain := range chains {
-		respBatch, err := pr.scraper.ScrapePrices(mcp.PriceBatchRequest{
-			ShopChain:    chain,
-			ProductNames: productNames,
-		})
-		if err != nil {
-			return nil, err
-		}
+	type result struct {
+		chain string
+		total float64
+		err   error
+	}
 
-		var total float64
-		for i, resp := range respBatch {
-			price := resp.Price
-			if !resp.Available {
-				price = fallbackPrice
+	results := make(chan result, len(chains))
+
+	for _, chain := range chains {
+		go func(c string) {
+			respBatch, err := pr.scraper.ScrapePrices(mcp.PriceBatchRequest{
+				ShopChain:    c,
+				ProductNames: productNames,
+			})
+			if err != nil {
+				results <- result{err: err}
+				return
 			}
-			total += price * float64(list.Items[i].Quantity)
+
+			var total float64
+			for i, resp := range respBatch {
+				price := resp.Price
+				if !resp.Available {
+					price = fallbackPrice
+				}
+				total += price * float64(list.Items[i].Quantity)
+			}
+			results <- result{chain: c, total: total}
+		}(chain)
+	}
+
+	for i := 0; i < len(chains); i++ {
+		res := <-results
+		if res.err != nil {
+			return nil, res.err
 		}
-		totals[chain] = total
+		totals[res.chain] = res.total
 	}
 
 	return totals, nil
