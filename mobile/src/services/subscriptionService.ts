@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
+import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesError } from 'react-native-purchases';
 import * as Sentry from '@sentry/react-native';
 
 /** Represents the user's current subscription status. */
@@ -126,8 +126,9 @@ export async function purchaseSubscription(
   try {
     const { customerInfo } = await Purchases.purchaseProduct(productId);
     return parseCustomerInfo(customerInfo);
-  } catch (error: any) {
-    if (error?.userCancelled) {
+  } catch (error) {
+    const purchaseError = error as PurchasesError;
+    if (purchaseError?.userCancelled) {
       if (__DEV__) {
         console.log('[SubscriptionService] User cancelled purchase flow');
       }
