@@ -3,7 +3,6 @@ package api
 import (
 	"crypto/subtle"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -27,13 +26,12 @@ type APIHandler struct {
 }
 
 func NewAPIHandler(parser *agents.Parser, pricer *agents.Pricer, optimizer *agents.Optimizer) *APIHandler {
-	adminToken := os.Getenv("ADMIN_TOKEN")
 	return &APIHandler{
 		parser:          parser,
 		pricer:          pricer,
 		optimizer:       optimizer,
-		adminToken:      adminToken,
-		adminTokenBytes: []byte(adminToken),
+		adminToken:      os.Getenv("ADMIN_TOKEN"),
+		adminTokenBytes: []byte(os.Getenv("ADMIN_TOKEN")),
 	}
 }
 
@@ -106,62 +104,42 @@ type OptimizeResponse struct {
 // @Failure 500 {object} ErrorResponse
 // @Router /optimize [post]
 func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
-	req, ok := h.parseOptimizeRequest(w, r)
-	if !ok {
-		return
-	}
-
-	resp, err := h.processOptimization(req)
-	if err != nil {
-		SendJSONError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *APIHandler) parseOptimizeRequest(w http.ResponseWriter, r *http.Request) (*OptimizeRequest, bool) {
 	if r.Method != http.MethodPost {
 		SendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return nil, false
+		return
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
 	var req OptimizeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		SendJSONError(w, "Invalid request body", http.StatusBadRequest)
-		return nil, false
+		return
 	}
 
 	if len(req.UserInput) > 2000 {
 		SendJSONError(w, "Input too long", http.StatusBadRequest)
-		return nil, false
+		return
 	}
 
-	return &req, true
-}
-
-func (h *APIHandler) processOptimization(req *OptimizeRequest) (*OptimizeResponse, error) {
 	// 1. Parser
 	shoppingList, err := h.parser.Parse(req.UserInput)
 	if err != nil {
-		return nil, errors.New("Parser error: " + err.Error())
+		SendJSONError(w, "Parser error: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// 2. Pricer
 	prices, err := h.pricer.GetPrices(shoppingList)
 	if err != nil {
-		return nil, errors.New("Pricer error: " + err.Error())
+		SendJSONError(w, "Pricer error: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// 3. Optimizer
 	routePlan, err := h.optimizer.Optimize(shoppingList, prices, req.UserCoords)
 	if err != nil {
-		return nil, errors.New("Optimizer error: " + err.Error())
+		SendJSONError(w, "Optimizer error: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Calculate total cost
@@ -171,10 +149,16 @@ func (h *APIHandler) processOptimization(req *OptimizeRequest) (*OptimizeRespons
 		totalCost = prices[bestShop]
 	}
 
-	return &OptimizeResponse{
+	resp := OptimizeResponse{
 		RoutePlan: routePlan,
 		TotalCost: totalCost,
-	}, nil
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		SendJSONError(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool {
