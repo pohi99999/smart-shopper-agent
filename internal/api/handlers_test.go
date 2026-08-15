@@ -177,6 +177,24 @@ func TestAdminPricesHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("POST Invalid JSON", func(t *testing.T) {
+		originalToken := os.Getenv("ADMIN_TOKEN")
+		os.Setenv("ADMIN_TOKEN", "test-token-123")
+		defer os.Setenv("ADMIN_TOKEN", originalToken)
+
+		handler := NewAPIHandler(nil, nil, nil)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/prices", bytes.NewBuffer([]byte(`{ invalid json }`)))
+		req.Header.Set("X-Admin-Token", "test-token-123")
+		rec := httptest.NewRecorder()
+
+		handler.AdminPricesPostHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+	})
+
 	t.Run("POST Unauthorized", func(t *testing.T) {
 		originalToken := os.Getenv("ADMIN_TOKEN")
 		os.Setenv("ADMIN_TOKEN", "test-token-123")
@@ -591,5 +609,4 @@ func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
 	handler.pricesCacheMut.Unlock()
 
 	wg.Wait()
-}
 }
