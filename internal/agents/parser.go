@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"smart-shopper-agent/internal/models"
+	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -18,6 +19,9 @@ type Parser struct {
 	Client *http.Client
 	APIURL string
 	APIKey string
+
+	mu    sync.RWMutex
+	cache map[string]models.ShoppingList
 }
 
 func NewParser() *Parser {
@@ -26,6 +30,7 @@ func NewParser() *Parser {
 		Client: &http.Client{Timeout: 10 * time.Second},
 		APIURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
 		APIKey: os.Getenv("GEMINI_API_KEY"),
+		cache:  make(map[string]models.ShoppingList),
 	}
 }
 
@@ -106,6 +111,13 @@ func (p *Parser) doAttempt(client *http.Client, apiURL, apiKey string, jsonData 
 }
 
 func (p *Parser) Parse(input string) (models.ShoppingList, error) {
+	p.mu.RLock()
+	if cachedList, found := p.cache[input]; found {
+		p.mu.RUnlock()
+		return cachedList, nil
+	}
+	p.mu.RUnlock()
+
 	apiKey := p.APIKey
 	if apiKey == "" || apiKey == "your_api_key_here" {
 		return models.ShoppingList{}, fmt.Errorf("GEMINI_API_KEY is not set or invalid")
@@ -142,6 +154,15 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 			lastErr = err
 			continue
 		}
+
+		// Cache the successful result
+		p.mu.Lock()
+		if p.cache == nil {
+			p.cache = make(map[string]models.ShoppingList)
+		}
+		p.cache[input] = shoppingList
+		p.mu.Unlock()
+
 		return shoppingList, nil
 	}
 	return models.ShoppingList{}, fmt.Errorf("failed to parse after %d retries: %w", maxRetries, lastErr)
