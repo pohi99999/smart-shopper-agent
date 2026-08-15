@@ -1,7 +1,6 @@
 package api
 
 import (
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -314,7 +313,8 @@ func TestLoadTrustedProxies(t *testing.T) {
 			os.Setenv("TRUSTED_PROXIES", tt.envVar)
 			LoadTrustedProxies()
 
-			cache, _ := trustedProxiesCache.Load().([]*net.IPNet)
+			trie, _ := trustedProxiesCache.Load().(*CIDRTrie)
+			cache := trie.cidrs
 
 			if len(cache) != tt.expectedLen {
 				t.Errorf("Expected cache length %d, got %d", tt.expectedLen, len(cache))
