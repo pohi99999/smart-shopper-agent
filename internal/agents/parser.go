@@ -14,6 +14,15 @@ import (
 
 const ParserSystemPrompt = "You are a shopping assistant parser that extracts shopping items and quantities from natural language user input."
 
+const defaultAPIURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+func defaultClient() *http.Client {
+	return &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: http.DefaultTransport,
+	}
+}
+
 type Parser struct {
 	Client *http.Client
 	APIURL string
@@ -23,8 +32,8 @@ type Parser struct {
 func NewParser() *Parser {
 	_ = godotenv.Load()
 	return &Parser{
-		Client: &http.Client{Timeout: 10 * time.Second},
-		APIURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+		Client: defaultClient(),
+		APIURL: defaultAPIURL,
 		APIKey: os.Getenv("GEMINI_API_KEY"),
 	}
 }
@@ -118,15 +127,12 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 
 	client := p.Client
 	if client == nil {
-		client = &http.Client{
-			Timeout:   10 * time.Second,
-			Transport: http.DefaultTransport,
-		}
+		client = defaultClient()
 	}
 
 	apiURL := p.APIURL
 	if apiURL == "" {
-		apiURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+		apiURL = defaultAPIURL
 	}
 
 	var lastErr error
