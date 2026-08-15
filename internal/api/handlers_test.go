@@ -592,4 +592,3 @@ func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
 
 	wg.Wait()
 }
-}
