@@ -8,6 +8,7 @@ import (
 	"smart-shopper-agent/internal/agents"
 	"smart-shopper-agent/internal/api"
 	"smart-shopper-agent/internal/mcp"
+	"time"
 
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -15,9 +16,20 @@ import (
 )
 
 var (
-	startServer = http.ListenAndServe
+	startServer = startServerWithTimeouts
 	osExit      = os.Exit
 )
+
+func startServerWithTimeouts(addr string, handler http.Handler) error {
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      handler,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	return server.ListenAndServe()
+}
 
 func setupMux() *http.ServeMux {
 	mux := http.NewServeMux()

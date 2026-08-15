@@ -550,7 +550,6 @@ func TestSendJSONError_ErrorPath(t *testing.T) {
 	// This test asserts nothing panic or crash when writing to connection fails
 }
 
-
 func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -591,5 +590,4 @@ func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
 	handler.pricesCacheMut.Unlock()
 
 	wg.Wait()
-}
 }
