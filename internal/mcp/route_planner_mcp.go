@@ -114,12 +114,17 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 	// Approximate capacity based on ~25 characters per coordinate pair (e.g. "-123.456789,-123.456789;")
 	coordsBuilder.Grow((len(req.Destinations) + 1) * 25)
 
-	fmt.Fprintf(&coordsBuilder, "%f,%f", req.Source.Longitude, req.Source.Latitude)
+	coordsBuilder.WriteString(strconv.FormatFloat(req.Source.Longitude, 'f', 6, 64))
+	coordsBuilder.WriteString(",")
+	coordsBuilder.WriteString(strconv.FormatFloat(req.Source.Latitude, 'f', 6, 64))
 
 	// Ensure consistent order of destinations
 	shopNames := make([]string, 0, len(req.Destinations))
 	for name, coord := range req.Destinations {
-		fmt.Fprintf(&coordsBuilder, ";%f,%f", coord.Longitude, coord.Latitude)
+		coordsBuilder.WriteString(";")
+		coordsBuilder.WriteString(strconv.FormatFloat(coord.Longitude, 'f', 6, 64))
+		coordsBuilder.WriteString(",")
+		coordsBuilder.WriteString(strconv.FormatFloat(coord.Latitude, 'f', 6, 64))
 		shopNames = append(shopNames, name)
 	}
 
