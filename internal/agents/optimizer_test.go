@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -94,11 +95,11 @@ func TestOptimizer_DistanceLimit(t *testing.T) {
 	}
 
 	if err == nil {
-		t.Fatalf("Expected error 'no shops found within 50 km', got nil")
+		t.Fatalf("Expected error 'no shops found within %g km', got nil", MaxDistanceKM)
 	}
 
-	if err.Error() != "no shops found within 50 km" {
-		t.Errorf("Expected 'no shops found within 50 km', got: %v", err)
+	if err.Error() != fmt.Sprintf("no shops found within %g km", MaxDistanceKM) {
+		t.Errorf("Expected 'no shops found within %g km', got: %v", MaxDistanceKM, err)
 	}
 }
 
@@ -130,11 +131,11 @@ func TestOptimizer_EmptyPrices(t *testing.T) {
 	_, err := optimizer.Optimize(list, prices, userCoords)
 
 	if err == nil {
-		t.Fatalf("Expected error 'no shops found within 50 km', got nil")
+		t.Fatalf("Expected error 'no shops found within %g km', got nil", MaxDistanceKM)
 	}
 
-	if err.Error() != "no shops found within 50 km" {
-		t.Errorf("Expected 'no shops found within 50 km', got: %v", err)
+	if err.Error() != fmt.Sprintf("no shops found within %g km", MaxDistanceKM) {
+		t.Errorf("Expected 'no shops found within %g km', got: %v", MaxDistanceKM, err)
 	}
 }
 

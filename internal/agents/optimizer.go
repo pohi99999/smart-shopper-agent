@@ -9,6 +9,8 @@ import (
 
 const OptimizerSystemPrompt = "You are an expert route and budget optimizer that selects the best shopping destination based on prices and travel distance."
 
+const MaxDistanceKM = 50.0
+
 type Optimizer struct {
 	planner *mcp.RoutePlanner
 	scraper *mcp.PriceScraper
@@ -23,7 +25,7 @@ func NewOptimizer(planner *mcp.RoutePlanner, scraper *mcp.PriceScraper) *Optimiz
 
 func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64, userCoords mcp.Coordinates) (models.RoutePlan, error) {
 	if len(prices) == 0 {
-		return models.RoutePlan{}, fmt.Errorf("no shops found within 50 km")
+		return models.RoutePlan{}, fmt.Errorf("no shops found within %g km", MaxDistanceKM)
 	}
 
 	bestShop := ""
@@ -58,8 +60,8 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 			continue
 		}
 
-		// Skip if the distance is greater than 50 km
-		if routeResp.DistanceKM > 50.0 {
+		// Skip if the distance is greater than MaxDistanceKM
+		if routeResp.DistanceKM > MaxDistanceKM {
 			continue
 		}
 
@@ -70,7 +72,7 @@ func (o *Optimizer) Optimize(list models.ShoppingList, prices map[string]float64
 	}
 
 	if bestShop == "" {
-		return models.RoutePlan{}, fmt.Errorf("no shops found within 50 km")
+		return models.RoutePlan{}, fmt.Errorf("no shops found within %g km", MaxDistanceKM)
 	}
 
 	items := make([]string, 0, len(list.Items))
