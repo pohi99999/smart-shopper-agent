@@ -133,7 +133,7 @@ func (i *rateLimiter) cleanup() {
 var limiter = NewRateLimiter(rate.Every(time.Minute/10), 10) // 10 requests per minute
 
 var (
-	trustedProxiesCache atomic.Value // Stores []*net.IPNet
+	trustedProxiesCache atomic.Value // Stores *CIDRTrie
 )
 
 func init() {
@@ -143,7 +143,7 @@ func init() {
 // LoadTrustedProxies reads the TRUSTED_PROXIES environment variable and updates the internal cache.
 func LoadTrustedProxies() {
 	trustedProxiesEnv := os.Getenv("TRUSTED_PROXIES")
-	var newCache []*net.IPNet
+	trie := NewCIDRTrie()
 
 	if trustedProxiesEnv != "" {
 		proxies := strings.Split(trustedProxiesEnv, ",")
@@ -156,7 +156,7 @@ func LoadTrustedProxies() {
 			if strings.Contains(proxy, "/") {
 				_, ipNet, err := net.ParseCIDR(proxy)
 				if err == nil {
-					newCache = append(newCache, ipNet)
+					trie.AddIPNet(ipNet)
 				}
 			} else {
 				trustedIP := net.ParseIP(proxy)
@@ -169,13 +169,13 @@ func LoadTrustedProxies() {
 						mask = net.CIDRMask(128, 128)
 					}
 					ipNet := &net.IPNet{IP: trustedIP, Mask: mask}
-					newCache = append(newCache, ipNet)
+					trie.AddIPNet(ipNet)
 				}
 			}
 		}
 	}
 
-	trustedProxiesCache.Store(newCache)
+	trustedProxiesCache.Store(trie)
 }
 
 func isTrustedProxy(ip string) bool {
@@ -184,17 +184,12 @@ func isTrustedProxy(ip string) bool {
 		return false
 	}
 
-	cache, ok := trustedProxiesCache.Load().([]*net.IPNet)
+	trie, ok := trustedProxiesCache.Load().(*CIDRTrie)
 	if !ok {
 		return false
 	}
 
-	for _, ipNet := range cache {
-		if ipNet.Contains(clientIP) {
-			return true
-		}
-	}
-	return false
+	return trie.Contains(clientIP)
 }
 
 // GetClientIP extracts the real client IP address securely, handling X-Forwarded-For.

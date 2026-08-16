@@ -56,10 +56,12 @@ func BenchmarkRateLimiter_Contention(b *testing.B) {
 
 func BenchmarkIsTrustedProxy_Contention(b *testing.B) {
 	// Add some dummy trusted proxies
-	trustedProxiesCache.Store([]*net.IPNet{
-		{IP: net.ParseIP("10.0.0.0"), Mask: net.CIDRMask(8, 32)},
-		{IP: net.ParseIP("192.168.0.0"), Mask: net.CIDRMask(16, 32)},
-	})
+	trie := NewCIDRTrie()
+	_, ipNet1, _ := net.ParseCIDR("10.0.0.0/8")
+	trie.AddIPNet(ipNet1)
+	_, ipNet2, _ := net.ParseCIDR("192.168.0.0/16")
+	trie.AddIPNet(ipNet2)
+	trustedProxiesCache.Store(trie)
 
 	ipStr := "192.168.1.1"
 
