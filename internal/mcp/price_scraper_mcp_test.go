@@ -190,3 +190,73 @@ func TestGetShopChains(t *testing.T) {
 		}
 	}
 }
+
+func TestGetShopCoordinatesBulk(t *testing.T) {
+	ps := &PriceScraper{}
+	ps.SetShopsForTesting(map[string]ShopData{
+		"Aldi": {
+			Coordinates: Coordinates{Latitude: 46.8451, Longitude: 16.8455},
+		},
+		"Spar": {
+			Coordinates: Coordinates{Latitude: 47.0, Longitude: 19.0},
+		},
+	})
+
+	tests := []struct {
+		name       string
+		shopChains []string
+		wantErr    bool
+		expected   map[string]Coordinates
+	}{
+		{
+			name:       "Success - Existing shops",
+			shopChains: []string{"Aldi", "Spar"},
+			wantErr:    false,
+			expected: map[string]Coordinates{
+				"Aldi": {Latitude: 46.8451, Longitude: 16.8455},
+				"Spar": {Latitude: 47.0, Longitude: 19.0},
+			},
+		},
+		{
+			name:       "Success - Empty input",
+			shopChains: []string{},
+			wantErr:    false,
+			expected:   map[string]Coordinates{},
+		},
+		{
+			name:       "Error - Missing shop",
+			shopChains: []string{"Aldi", "MissingShop"},
+			wantErr:    true,
+			expected:   nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			coords, err := ps.GetShopCoordinatesBulk(tt.shopChains)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("expected error, but got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(coords) != len(tt.expected) {
+				t.Fatalf("expected map of length %d, got %d", len(tt.expected), len(coords))
+			}
+
+			for k, expectedCoord := range tt.expected {
+				if actualCoord, ok := coords[k]; !ok {
+					t.Errorf("expected to find coordinates for shop %s", k)
+				} else if actualCoord.Latitude != expectedCoord.Latitude || actualCoord.Longitude != expectedCoord.Longitude {
+					t.Errorf("expected coordinates (%f, %f) for shop %s, got (%f, %f)", expectedCoord.Latitude, expectedCoord.Longitude, k, actualCoord.Latitude, actualCoord.Longitude)
+				}
+			}
+		})
+	}
+}
