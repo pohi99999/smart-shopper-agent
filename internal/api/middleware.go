@@ -100,13 +100,33 @@ func (i *rateLimiter) cleanup() {
 	now := time.Now()
 	for j := 0; j < numShards; j++ {
 		shard := i.shards[j]
+
+		var toDelete []string
 		shard.mu.Lock()
 		for ip, v := range shard.visitors {
 			if now.Sub(v.lastSeen) > 3*time.Minute {
-				delete(shard.visitors, ip)
+				toDelete = append(toDelete, ip)
 			}
 		}
 		shard.mu.Unlock()
+
+		if len(toDelete) > 0 {
+			const batchSize = 100
+			for k := 0; k < len(toDelete); k += batchSize {
+				end := k + batchSize
+				if end > len(toDelete) {
+					end = len(toDelete)
+				}
+
+				shard.mu.Lock()
+				for _, ip := range toDelete[k:end] {
+					if v, exists := shard.visitors[ip]; exists && now.Sub(v.lastSeen) > 3*time.Minute {
+						delete(shard.visitors, ip)
+					}
+				}
+				shard.mu.Unlock()
+			}
+		}
 	}
 }
 
