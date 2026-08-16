@@ -260,3 +260,50 @@ func TestGetShopCoordinatesBulk(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateCachedChains(t *testing.T) {
+	tests := []struct {
+		name     string
+		shops    map[string]ShopData
+		expected []string
+	}{
+		{
+			name:     "Empty map",
+			shops:    map[string]ShopData{},
+			expected: []string{},
+		},
+		{
+			name: "Map with items",
+			shops: map[string]ShopData{
+				"Spar":  {},
+				"Tesco": {},
+				"Aldi":  {},
+			},
+			expected: []string{"Aldi", "Spar", "Tesco"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ps := &PriceScraper{
+				shops: tt.shops,
+			}
+			ps.updateCachedChains()
+
+			if len(ps.cachedChains) != len(tt.expected) {
+				t.Fatalf("expected length %d, got %d", len(tt.expected), len(ps.cachedChains))
+			}
+
+			found := make(map[string]bool)
+			for _, c := range ps.cachedChains {
+				found[c] = true
+			}
+
+			for _, e := range tt.expected {
+				if !found[e] {
+					t.Errorf("expected to find chain %s", e)
+				}
+			}
+		})
+	}
+}
