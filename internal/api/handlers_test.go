@@ -290,6 +290,61 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
 		}
 	})
+	t.Run("Invalid Latitude", func(t *testing.T) {
+		reqBody := OptimizeRequest{
+			UserInput: "tej",
+			UserCoords: mcp.Coordinates{
+				Latitude:  100.0,
+				Longitude: 16.0,
+			},
+		}
+		body, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+
+		var errResp ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("Failed to decode JSON error response: %v", err)
+		}
+
+		if errResp.Error != "Invalid latitude" {
+			t.Errorf("Expected error message 'Invalid latitude', got '%s'", errResp.Error)
+		}
+	})
+
+	t.Run("Invalid Longitude", func(t *testing.T) {
+		reqBody := OptimizeRequest{
+			UserInput: "tej",
+			UserCoords: mcp.Coordinates{
+				Latitude:  46.0,
+				Longitude: 200.0,
+			},
+		}
+		body, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+
+		var errResp ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("Failed to decode JSON error response: %v", err)
+		}
+
+		if errResp.Error != "Invalid longitude" {
+			t.Errorf("Expected error message 'Invalid longitude', got '%s'", errResp.Error)
+		}
+	})
 }
 
 func TestOptimizeHandler_Integration(t *testing.T) {
