@@ -1,9 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -458,4 +460,60 @@ func TestIsTrustedProxy(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRateLimiterGetLimiterConcurrency(t *testing.T) {
+	rl := NewRateLimiter(rate.Every(time.Minute), 1)
+	defer rl.Stop()
+
+	// Test 1: Concurrent requests for the same IP
+	t.Run("Same IP", func(t *testing.T) {
+		const numGoroutines = 100
+		ip := "192.168.1.100"
+		limiters := make([]*rate.Limiter, numGoroutines)
+		var wg sync.WaitGroup
+
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				limiters[idx] = rl.getLimiter(ip)
+			}(i)
+		}
+		wg.Wait()
+
+		// All goroutines should have received the exact same limiter instance
+		firstLimiter := limiters[0]
+		for i := 1; i < numGoroutines; i++ {
+			if limiters[i] != firstLimiter {
+				t.Errorf("Expected all limiters for the same IP to be identical. Mismatch at index %d", i)
+			}
+		}
+	})
+
+	// Test 2: Concurrent requests for different IPs
+	t.Run("Different IPs", func(t *testing.T) {
+		const numGoroutines = 100
+		limiters := make([]*rate.Limiter, numGoroutines)
+		var wg sync.WaitGroup
+
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				ip := fmt.Sprintf("10.0.0.%d", idx)
+				limiters[idx] = rl.getLimiter(ip)
+			}(i)
+		}
+		wg.Wait()
+
+		// All goroutines should have received different limiter instances
+		seen := make(map[*rate.Limiter]bool)
+		for i := 0; i < numGoroutines; i++ {
+			if seen[limiters[i]] {
+				t.Errorf("Expected all limiters for different IPs to be unique. Duplicate found at index %d", i)
+			}
+			seen[limiters[i]] = true
+		}
+	})
 }
