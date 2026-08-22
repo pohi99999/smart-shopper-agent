@@ -142,6 +142,16 @@ func (h *APIHandler) parseOptimizeRequest(w http.ResponseWriter, r *http.Request
 		return nil, false
 	}
 
+	if req.UserCoords.Latitude < -90 || req.UserCoords.Latitude > 90 {
+		SendJSONError(w, "Invalid latitude", http.StatusBadRequest)
+		return nil, false
+	}
+
+	if req.UserCoords.Longitude < -180 || req.UserCoords.Longitude > 180 {
+		SendJSONError(w, "Invalid longitude", http.StatusBadRequest)
+		return nil, false
+	}
+
 	return &req, true
 }
 
