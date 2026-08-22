@@ -517,3 +517,36 @@ func TestRateLimiterGetLimiterConcurrency(t *testing.T) {
 		}
 	})
 }
+
+func TestRateLimiter_runCleanup(t *testing.T) {
+	// Initialize a rate limiter manually without starting the goroutine via NewRateLimiter
+	rl := &rateLimiter{
+		rate:  rate.Every(time.Minute / 10),
+		burst: 10,
+		stop:  make(chan struct{}),
+	}
+	for i := 0; i < numShards; i++ {
+		rl.shards[i] = &rateLimiterShard{
+			visitors: make(map[string]*visitor),
+		}
+	}
+
+	done := make(chan struct{})
+
+	// Start runCleanup in a goroutine
+	go func() {
+		rl.runCleanup()
+		close(done)
+	}()
+
+	// Signal it to stop
+	rl.Stop()
+
+	// Wait for termination with a timeout
+	select {
+	case <-done:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Fatal("runCleanup did not terminate after Stop() was called")
+	}
+}
