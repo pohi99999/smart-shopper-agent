@@ -1,6 +1,10 @@
-import { Platform } from 'react-native';
-import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesError } from 'react-native-purchases';
-import * as Sentry from '@sentry/react-native';
+import { Platform } from "react-native";
+import Purchases, {
+  CustomerInfo,
+  LOG_LEVEL,
+  PurchasesError,
+} from "react-native-purchases";
+import * as Sentry from "@sentry/react-native";
 
 /** Represents the user's current subscription status. */
 export interface SubscriptionStatus {
@@ -13,13 +17,13 @@ export interface SubscriptionStatus {
 
 /** Product identifiers – match RevenueCat dashboard entries exactly. */
 export const PRODUCT_IDS = {
-  MONTHLY: 'smart_shopper_pro_monthly',
-  ANNUAL: 'smart_shopper_pro_annual',
+  MONTHLY: "smart_shopper_pro_monthly",
+  ANNUAL: "smart_shopper_pro_annual",
 } as const;
 
 export type ProductId = (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS];
 
-export const PRO_ENTITLEMENT = 'pro';
+export const PRO_ENTITLEMENT = "pro";
 
 let isInitialized = false;
 
@@ -32,14 +36,11 @@ export function initRevenueCat(): boolean {
   }
 
   const apiKey =
-    Platform.OS === 'ios'
+    Platform.OS === "ios"
       ? process.env.EXPO_PUBLIC_RC_APPLE_KEY
       : process.env.EXPO_PUBLIC_RC_GOOGLE_KEY;
 
   if (!apiKey) {
-    if (__DEV__) {
-      console.log('[SubscriptionService] RevenueCat API key missing. Running in fallback mode.');
-    }
     return false;
   }
 
@@ -51,7 +52,11 @@ export function initRevenueCat(): boolean {
     isInitialized = true;
     return true;
   } catch (error) {
-    Sentry.captureException(error, { extra: { context: '[SubscriptionService] Failed to initialize RevenueCat:' } });
+    Sentry.captureException(error, {
+      extra: {
+        context: "[SubscriptionService] Failed to initialize RevenueCat:",
+      },
+    });
     return false;
   }
 }
@@ -59,8 +64,14 @@ export function initRevenueCat(): boolean {
 /**
  * Safely extracts SubscriptionStatus from RevenueCat CustomerInfo.
  */
-export function parseCustomerInfo(customerInfo?: CustomerInfo | null): SubscriptionStatus {
-  if (!customerInfo || !customerInfo.entitlements || !customerInfo.entitlements.active) {
+export function parseCustomerInfo(
+  customerInfo?: CustomerInfo | null,
+): SubscriptionStatus {
+  if (
+    !customerInfo ||
+    !customerInfo.entitlements ||
+    !customerInfo.entitlements.active
+  ) {
     return {
       isPro: false,
       expiresAt: null,
@@ -70,7 +81,7 @@ export function parseCustomerInfo(customerInfo?: CustomerInfo | null): Subscript
 
   const entitlement =
     customerInfo.entitlements.active[PRO_ENTITLEMENT] ||
-    customerInfo.entitlements.active['pro_entitlement'];
+    customerInfo.entitlements.active["pro_entitlement"];
 
   if (entitlement) {
     return {
@@ -100,7 +111,11 @@ export async function fetchSubscriptionStatus(): Promise<SubscriptionStatus> {
     const customerInfo = await Purchases.getCustomerInfo();
     return parseCustomerInfo(customerInfo);
   } catch (error) {
-    Sentry.captureException(error, { extra: { context: '[SubscriptionService] Error fetching subscription status:' } });
+    Sentry.captureException(error, {
+      extra: {
+        context: "[SubscriptionService] Error fetching subscription status:",
+      },
+    });
     return { isPro: false, expiresAt: null, productId: null };
   }
 }
@@ -113,9 +128,6 @@ export async function purchaseSubscription(
 ): Promise<SubscriptionStatus> {
   const initialized = initRevenueCat();
   if (!initialized) {
-    if (__DEV__) {
-      console.log(`[SubscriptionService] Mock purchase executed (no API key configured): ${productId}`);
-    }
     return {
       isPro: true,
       expiresAt: _mockExpiryDate(productId),
@@ -129,11 +141,11 @@ export async function purchaseSubscription(
   } catch (error) {
     const purchaseError = error as PurchasesError;
     if (purchaseError?.userCancelled) {
-      if (__DEV__) {
-        console.log('[SubscriptionService] User cancelled purchase flow');
-      }
+      // User cancelled
     } else {
-      Sentry.captureException(error, { extra: { context: '[SubscriptionService] Purchase error:' } });
+      Sentry.captureException(error, {
+        extra: { context: "[SubscriptionService] Purchase error:" },
+      });
     }
     throw error;
   }
@@ -152,7 +164,9 @@ export async function restorePurchases(): Promise<SubscriptionStatus> {
     const customerInfo = await Purchases.restorePurchases();
     return parseCustomerInfo(customerInfo);
   } catch (error) {
-    Sentry.captureException(error, { extra: { context: '[SubscriptionService] Restore purchases error:' } });
+    Sentry.captureException(error, {
+      extra: { context: "[SubscriptionService] Restore purchases error:" },
+    });
     throw error;
   }
 }
