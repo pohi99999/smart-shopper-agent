@@ -99,8 +99,8 @@ async function main() {
   const N8N_HOST  = (env.N8N_HOST || 'http://localhost:5678').replace(/\/$/, '');
   const N8N_API_KEY = env.N8N_API_KEY;
 
-  if (!N8N_API_KEY || N8N_API_KEY === '******') {
-    console.error('❌  N8N_API_KEY is not set or is masked in .env');
+  if (!N8N_API_KEY) {
+    console.error('❌  N8N_API_KEY is not set in .env');
     console.error('    Add a real API key: Settings → API in your n8n instance.');
     process.exit(1);
   }
