@@ -22,9 +22,9 @@ func BenchmarkAuth_Current(b *testing.B) {
 
 func BenchmarkAuth_Optimized(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		providedBytes := []byte(benchValidToken)
-		if len(providedBytes) == len(benchAdminTokenBytes) {
-			_ = subtle.ConstantTimeCompare(providedBytes, benchAdminTokenBytes) == 1
+		providedToken := benchValidToken
+		if len(providedToken) == len(benchAdminTokenBytes) {
+			_ = subtle.ConstantTimeCompare([]byte(providedToken), benchAdminTokenBytes) == 1
 		}
 	}
 }

@@ -184,9 +184,8 @@ func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	providedTokenBytes := []byte(token)
 
-	if len(providedTokenBytes) != len(h.adminTokenBytes) || subtle.ConstantTimeCompare(providedTokenBytes, h.adminTokenBytes) != 1 {
+	if len(token) != len(h.adminTokenBytes) || subtle.ConstantTimeCompare([]byte(token), h.adminTokenBytes) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
