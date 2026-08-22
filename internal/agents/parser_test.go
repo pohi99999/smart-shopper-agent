@@ -311,7 +311,7 @@ func TestParser_doAttempt_Success(t *testing.T) {
 	})
 
 	parser := NewParser()
-	result, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	result, err := parser.doAttempt(context.Background(), mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -340,7 +340,7 @@ func TestParser_doAttempt_NetworkError(t *testing.T) {
 
 	parser := NewParser()
 	// Need to use default client so it uses our mock transport
-	_, err := parser.doAttempt(parser.Client, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	_, err := parser.doAttempt(context.Background(), parser.Client, "http://dummy", "dummy_key", []byte(`{}`), 0)
 	if err == nil {
 		t.Fatalf("Expected network error, got nil")
 	}
@@ -359,7 +359,7 @@ func TestParser_doAttempt_DecodeError(t *testing.T) {
 	})
 
 	parser := NewParser()
-	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	_, err := parser.doAttempt(context.Background(), mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
 	if err == nil {
 		t.Fatalf("Expected decode error, got nil")
 	}
