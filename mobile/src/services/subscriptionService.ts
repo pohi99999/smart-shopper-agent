@@ -129,9 +129,7 @@ export async function purchaseSubscription(
   } catch (error) {
     const purchaseError = error as PurchasesError;
     if (purchaseError?.userCancelled) {
-      if (__DEV__) {
-        console.log('[SubscriptionService] User cancelled purchase flow');
-      }
+      Sentry.captureException(purchaseError, { extra: { context: '[SubscriptionService] User cancelled purchase flow:' } });
     } else {
       Sentry.captureException(error, { extra: { context: '[SubscriptionService] Purchase error:' } });
     }
