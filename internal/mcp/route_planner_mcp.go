@@ -36,6 +36,9 @@ type RoutePlanner struct {
 	baseURL string
 }
 
+// MaxDestinations is the maximum number of destinations allowed in a single request to prevent excessively large matrices.
+const MaxDestinations = 50
+
 func NewRoutePlanner() *RoutePlanner {
 	return &RoutePlanner{
 		baseURL: "https://router.project-osrm.org",
@@ -100,6 +103,10 @@ func (rp *RoutePlanner) fetchRouteMatrix(url string) (*OSRMMatrixResponse, error
 func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string]RouteResponse, error) {
 	if len(req.Destinations) == 0 {
 		return map[string]RouteResponse{}, nil
+	}
+
+	if len(req.Destinations) > MaxDestinations {
+		return nil, fmt.Errorf("too many destinations: %d exceeds maximum allowed (%d)", len(req.Destinations), MaxDestinations)
 	}
 
 	coordsStr, destIndicesStr, shopNames := buildCoordinateStrings(req)

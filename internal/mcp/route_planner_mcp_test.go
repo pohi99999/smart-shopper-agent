@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -128,4 +129,29 @@ type errorTransport struct{}
 
 func (t *errorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return nil, errors.New("mock timeout error")
+}
+
+func TestRoutePlanner_CalculateRouteMatrix_TooManyDestinations(t *testing.T) {
+	rp := NewRoutePlanner()
+	req := RouteMatrixRequest{
+		Source:       Coordinates{Latitude: 46.8400, Longitude: 16.8439},
+		Destinations: make(map[string]Coordinates),
+	}
+
+	for i := 0; i < MaxDestinations+1; i++ {
+		req.Destinations[fmt.Sprintf("Shop%d", i)] = Coordinates{
+			Latitude:  46.8400 + float64(i)*0.01,
+			Longitude: 16.8439 + float64(i)*0.01,
+		}
+	}
+
+	_, err := rp.CalculateRouteMatrix(req)
+	if err == nil {
+		t.Fatal("Expected error for too many destinations, got nil")
+	}
+
+	expectedErrMsgPrefix := "too many destinations:"
+	if !strings.HasPrefix(err.Error(), expectedErrMsgPrefix) {
+		t.Errorf("Expected error to start with %q, got %q", expectedErrMsgPrefix, err.Error())
+	}
 }
