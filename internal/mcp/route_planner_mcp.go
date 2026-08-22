@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -31,9 +32,21 @@ type OSRMMatrixResponse struct {
 	Durations [][]float64 `json:"durations"`
 }
 
+type RouteCacheKey struct {
+	SourceLat, SourceLon float64
+	DestLat, DestLon     float64
+}
+
+type RouteCacheEntry struct {
+	Response  RouteResponse
+	ExpiresAt time.Time
+}
+
 type RoutePlanner struct {
 	client  *http.Client
 	baseURL string
+	cache   map[RouteCacheKey]RouteCacheEntry
+	mu      sync.RWMutex
 }
 
 func NewRoutePlanner() *RoutePlanner {
@@ -42,6 +55,7 @@ func NewRoutePlanner() *RoutePlanner {
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
+		cache: make(map[RouteCacheKey]RouteCacheEntry),
 	}
 }
 
@@ -49,6 +63,40 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 	if len(req.Destinations) == 0 {
 		return map[string]RouteResponse{}, nil
 	}
+
+	rp.mu.Lock()
+	if rp.cache == nil {
+		rp.cache = make(map[RouteCacheKey]RouteCacheEntry)
+	}
+	rp.mu.Unlock()
+
+	results := make(map[string]RouteResponse)
+	uncachedDestinations := make(map[string]Coordinates)
+	now := time.Now()
+
+	rp.mu.RLock()
+	for name, coord := range req.Destinations {
+		key := RouteCacheKey{
+			SourceLat: req.Source.Latitude,
+			SourceLon: req.Source.Longitude,
+			DestLat:   coord.Latitude,
+			DestLon:   coord.Longitude,
+		}
+
+		if entry, exists := rp.cache[key]; exists && now.Before(entry.ExpiresAt) {
+			results[name] = entry.Response
+		} else {
+			uncachedDestinations[name] = coord
+		}
+	}
+	rp.mu.RUnlock()
+
+	if len(uncachedDestinations) == 0 {
+		return results, nil
+	}
+
+	// Only query for uncached destinations
+	req.Destinations = uncachedDestinations
 
 	// Build the coordinate string: {source_lon},{source_lat};{dest1_lon},{dest1_lat};...
 	var coordsBuilder strings.Builder
@@ -110,7 +158,8 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 		return nil, fmt.Errorf("unexpected matrix durations format or length")
 	}
 
-	results := make(map[string]RouteResponse)
+	expiresAt := time.Now().Add(24 * time.Hour)
+	rp.mu.Lock()
 	for i, shopName := range shopNames {
 		// Index 0 in the response arrays corresponds to the source itself,
 		// but since we used destinations=1,2,3... the returned array only contains the requested destinations.
@@ -124,10 +173,17 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 		distanceKM := osrmResp.Distances[0][i] / 1000.0
 		durationMin := osrmResp.Durations[0][i] / 60.0
 
-		results[shopName] = RouteResponse{
+		resp := RouteResponse{
 			DistanceKM:  distanceKM,
 			DurationMin: durationMin,
 		}
+		results[shopName] = resp
+		rp.cache[RouteCacheKey{
+			SourceLat: req.Source.Latitude,
+			SourceLon: req.Source.Longitude,
+			DestLat:   req.Destinations[shopName].Latitude,
+			DestLon:   req.Destinations[shopName].Longitude,
+		}] = RouteCacheEntry{Response: resp, ExpiresAt: expiresAt}
 
 		slog.Debug("Route matrix calculated",
 			"shop", shopName,
@@ -135,6 +191,7 @@ func (rp *RoutePlanner) CalculateRouteMatrix(req RouteMatrixRequest) (map[string
 			"duration_min", durationMin,
 		)
 	}
+	rp.mu.Unlock()
 
 	return results, nil
 }
