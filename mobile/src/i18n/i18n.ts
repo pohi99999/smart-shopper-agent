@@ -24,7 +24,6 @@ i18n
     resources,
     lng: getLocale(),
     fallbackLng: 'hu',
-    compatibilityJSON: 'v3',
     interpolation: {
       escapeValue: false,
     },

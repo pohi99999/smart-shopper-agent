@@ -1,11 +1,11 @@
 import { optimizeShoppingRoute, OptimizeResponse } from './api';
 
 // Mock the global fetch function
-global.fetch = jest.fn();
+globalThis.fetch = jest.fn();
 
 describe('optimizeShoppingRoute', () => {
   beforeEach(() => {
-    (global.fetch as jest.Mock).mockClear();
+    (globalThis.fetch as jest.Mock).mockClear();
   });
 
   it('successfully fetches and returns optimized route data', async () => {
@@ -22,14 +22,14 @@ describe('optimizeShoppingRoute', () => {
       total_cost: 1500,
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponseData,
     });
 
     const result = await optimizeShoppingRoute('tej', 47.123, 19.456);
 
-    expect(global.fetch).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_API_URL || 'https://localhost:8080'}/api/v1/optimize`, {
+    expect(globalThis.fetch).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_API_URL || 'https://localhost:8080'}/api/v1/optimize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,21 +55,21 @@ describe('optimizeShoppingRoute', () => {
       total_cost: 0,
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponseData,
     });
 
     await optimizeShoppingRoute('tej', 47.123, 19.456);
 
-    expect(global.fetch).toHaveBeenCalledWith('https://api.example.com/api/v1/optimize', expect.any(Object));
+    expect(globalThis.fetch).toHaveBeenCalledWith('https://api.example.com/api/v1/optimize', expect.any(Object));
 
     // Restore
     process.env.EXPO_PUBLIC_API_URL = originalEnv;
   });
 
   it('throws an error when the API returns a non-200 response with JSON error', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 400,
       json: async () => ({ error: 'Invalid input', code: 400 }),
@@ -79,7 +79,7 @@ describe('optimizeShoppingRoute', () => {
   });
 
   it('throws a generic error when the API returns a non-200 response without JSON', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 500,
       json: async () => { throw new Error('Not JSON'); },

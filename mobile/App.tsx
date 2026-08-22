@@ -9,7 +9,6 @@ import PaywallScreen from './src/screens/PaywallScreen';
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enableInExpoDevelopment: true,
   debug: __DEV__,
 });
 
