@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -196,11 +195,9 @@ func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool
 	}
 
 	token := r.Header.Get("X-Admin-Token")
+	providedTokenBytes := []byte(token)
 
-	expectedHash := sha256.Sum256(h.adminTokenBytes)
-	providedHash := sha256.Sum256([]byte(token))
-
-	if subtle.ConstantTimeCompare(expectedHash[:], providedHash[:]) != 1 {
+	if len(providedTokenBytes) != len(h.adminTokenBytes) || subtle.ConstantTimeCompare(providedTokenBytes, h.adminTokenBytes) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
