@@ -5,7 +5,7 @@ import (
 )
 
 type trieNode struct {
-	children [2]*trieNode
+	children   [2]*trieNode
 	isTerminal bool
 }
 
@@ -72,7 +72,6 @@ func (t *CIDRTrie) Contains(ip net.IP) bool {
 	} else {
 		ipBytes = ip.To16()
 	}
-
 
 	node := t.v4
 	if !isV4 {
