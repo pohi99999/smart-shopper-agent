@@ -307,3 +307,38 @@ func TestUpdateCachedChains(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateCachedChains_StateChange(t *testing.T) {
+	ps := &PriceScraper{
+		shops: map[string]ShopData{
+			"Aldi": {},
+		},
+	}
+	ps.updateCachedChains()
+
+	if len(ps.cachedChains) != 1 || ps.cachedChains[0] != "Aldi" {
+		t.Fatalf("expected [Aldi], got %v", ps.cachedChains)
+	}
+
+	ps.shops = map[string]ShopData{
+		"Spar":  {},
+		"Tesco": {},
+	}
+	ps.updateCachedChains()
+
+	if len(ps.cachedChains) != 2 {
+		t.Fatalf("expected length 2, got %d", len(ps.cachedChains))
+	}
+
+	found := make(map[string]bool)
+	for _, c := range ps.cachedChains {
+		found[c] = true
+	}
+
+	expected := []string{"Spar", "Tesco"}
+	for _, e := range expected {
+		if !found[e] {
+			t.Errorf("expected to find chain %s after state change", e)
+		}
+	}
+}
