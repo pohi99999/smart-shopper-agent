@@ -229,6 +229,18 @@ func TestGetShopCoordinatesBulk(t *testing.T) {
 			wantErr:    true,
 			expected:   nil,
 		},
+		{
+			name:       "Partial error - one shop exists, another missing",
+			shopChains: []string{"Aldi", "MissingShop"},
+			wantErr:    true,
+			expected:   nil,
+		},
+		{
+			name:       "Partial error - first missing, second exists",
+			shopChains: []string{"MissingShop", "Aldi"},
+			wantErr:    true,
+			expected:   nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -238,6 +250,9 @@ func TestGetShopCoordinatesBulk(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("expected error, but got nil")
+				}
+				if coords != nil {
+					t.Errorf("expected nil coords on error, got %v", coords)
 				}
 				return
 			}
