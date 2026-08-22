@@ -596,6 +596,46 @@ A Jules-ágak integrációja után egy teljes körű auditra került sor, amely 
 - A React Native frontend tesztek a frissített `package-lock.json`-nal is zöldek (**6/6 PASS, 17/17 teszt sikeres**).
 - `govulncheck` eredmény: 0 modul-szintű sebezhetőség (a maradék 6 találat kizárólag a helyi Go stdlib binárisban van, amit a lebegő verziójelölések automatikusan orvosolnak a következő build/CI futáskor).
 
+## 28. Fázis: Teljes Jules-ág Szinkronizáció, Regresszió-javítások és Production Audit (2026-08-22)
+
+A `git branch -r` 110 távoli ágat mutatott. `git branch -r --no-merged origin/main` alapján 85 már ancestor volt (korábbi fázisokban különböző úton bekerült a történelembe), 25 valódi jelölt maradt tartalmi felülvizsgálatra.
+
+### Beolvasztott ágak (16)
+Tartalmi diff-elemzés (nem csak commit-üzenet alapján) és teszt után beolvasztásra került:
+- **Tesztlefedettség:** `jules-4885368945427106490` (GetShopCoordinatesBulk edge case), `test-improvement-get-shop-chains` (táblázatos TestGetShopChains), `test/update-cached-chains-state` (TestUpdateCachedChains_StateChange), `jules-3092356839604121062` (getLimiter concurrency teszt), `test-ratelimiter-cleanup` (runCleanup teszt), `jules-13594012456295349268` (checkAdminAuth tesztek), `testing-doAttempt` (Parser.doAttempt tesztek), `jules-testing-parseOptimizeRequest` (parseOptimizeRequest tesztek).
+- **Biztonság/korrektség:** `fix/coordinate-validation` (lat/lon tartományellenőrzés az `OptimizeRequest`-ben), `fix/osrm-dos-vulnerability` (`MaxDestinations = 50` limit az OSRM matrix híváson), `fix/hardcoded-n8n-api-key` (a `'******'` maszkolt placeholder ellenőrzés eltávolítása a deploy szkriptből).
+- **Refaktor/kód-egészség:** `code-health/refactor-calculate-route-matrix` (`CalculateRouteMatrix` felbontása `buildCoordinateStrings`/`fetchRouteMatrix` segédfüggvényekre), `jules-testing-parseOptimizeRequest` gofmt-javítása a `cidrtrie.go`-ban.
+- **Aszinkron kontextuskezelés:** `jules-903931785373863774` - a `Parser.Parse`/`doAttempt` és `APIHandler.processOptimization` mostantól végigviszi a `context.Context`-et (`r.Context()`), így a retry-késleltetés megszakítható kliens-lecsatlakozáskor.
+- **Mobil:** `chore/remove-console-logs-subscription` (a `subscriptionService.ts` production `console.log` hívásainak eltávolítása, Prettier-formázás).
+
+### Két regresszió, amit a beolvasztás okozott - és a javításuk
+A `fix-admin-token-timing-attack` és `optimize-getprices-concurrency` ágak **tartalmilag helyesnek tűntek önmagukban**, de a beolvasztás előtt nem lett összevetve a GEMINI.md korábbi (2026-08-16-i) audit-bejegyzéseivel, amelyek **pontosan ugyanezt a két mintát már egyszer szándékosan visszavontak**:
+- `fix-admin-token-timing-attack`: a `checkAdminAuth`-ot visszaállította a kérésenkénti SHA-256 hash-elésre, ami a 2026-08-07-i (`jules-perf-optimize-auth`) ~10x-es optimalizációt vonta volna vissza. **Javítva**: visszaállítva a `len()+subtle.ConstantTimeCompare` gyors útra (`internal/api/auth_bench_test.go` benchmark igazolja: 9.9 ns/op vs. 97.1 ns/op).
+- `optimize-getprices-concurrency`: goroutine+channel párhuzamosítást vezetett be a `Pricer.GetPrices`-ba, ami a 2026-08-16-i (`performance/remove-pricer-goroutines`) döntést vonta volna vissza - a `PriceScraper.ScrapePrices` tiszta memórián belüli map-lookup, nincs hálózati I/O, a párhuzamosítás csak felesleges overhead. **Javítva**: visszaállítva egyszerű szekvenciális ciklusra.
+
+**Tanulság a jövőre:** Jules-ágak beolvasztása előtt a GEMINI.md korábbi fázisainak (különösen a "Szándékosan Kihagyott Ágak" szakaszoknak) átolvasása kötelező lépés kell legyen, nem csak a jelölt ág saját diffjének elemzése - egy ág önmagában helyesnek tűnhet, miközben egy korábban már meghozott, dokumentált teljesítmény/biztonsági döntést von vissza.
+
+### Szándékosan kihagyott ágak (9)
+- `fix-hardcoded-admin-token-11875848722827249784`, `fix-admin-token-timing-attack-11334997403240468676` (ld. fent, később mégis beolvasztva és javítva), `fix-x-forwarded-for-parsing-13716303541126758474`, `perf/parser-cache-6246276814834700013`: mind a négy pontosan megegyezik a 2026-08-16-i audit korábban dokumentált kihagyási listájával (elavult bázis, teljesítmény-visszalépés, korlátlanul növekvő cache).
+- `perf-optimize-osrm-cache-10992884837560963241`: 24 órás TTL-lel rendelkező, de sosem kiürített (nincs LRU/méretkorlát) route-cache. Mivel a forrás GPS-koordináta felhasználónként/kérésenként eltér, a valós találati arány közel nulla lenne, miközben a memóriahasználat korlátlanul nőne - ugyanaz a minta, mint a `perf/parser-cache` kihagyásának indoka.
+- `jules-5648991804720076550-dcbe133f`: a diffje `origin/main`-hez képest üres (a SendJSONError tesztek már egy korábbi fázisban bekerültek más úton).
+- `test-getpricesdata-edgecases-16618330904270411392`: a "teszt" ág valójában csak egy generált `coverage.out` fájlt adott hozzá, valódi tesztkód-változás nélkül.
+- `perf/optimize-admin-token-alloc-...`, `fix/remove-console-log-subscription-service-...`, `jules-8566717253450514095-...`: tartalmilag felülírta/duplikálta egy másik, ugyanabban a körben beolvasztott ág jobb megoldását.
+
+### Production Audit
+- **Kritikus webes hiba (blank page crash):** élesben tesztelve (`npx expo export --platform web` + böngészőben megnyitva) a webes build **teljesen üres oldalt** renderelt induláskor, konzolhiba nélkül. Kiderült: a `react-native-maps` nem támogatja a webet - nem-ios/android platformon `requireNativeComponent('AIRMap')`-ra esik vissza, ami a böngészőben nem létező natív komponensre hivatkozik és elszáll induláskor (a Sentry valószínűleg elnyeli a hibát riportálás közben, ezért nem jelenik meg a konzolban). **Javítás:** létrejött a [mobile/src/components/MapSection.web.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/components/MapSection.web.tsx) - Metro platform-kiterjesztés-feloldása automatikusan ezt tölti be webes build esetén a natív `MapSection.tsx` helyett, egyszerű bolt-lista fallbackkel a natív térkép helyett. Újra-exportálva és böngészőben ellenőrizve: a teljes UI helyesen renderel.
+- **3 korábban dokumentáltan elhalasztott TypeScript hiba javítva** (2026-08-16 audit óta vártak élő SDK-ellenőrzésre, most a `context7`-ből lekért aktuális Sentry/i18next dokumentáció alapján javítva):
+  - [App.tsx](file:///Z:/001_Workspace/smart-shopper-agent/mobile/App.tsx): az `enableInExpoDevelopment` opció eltávolítva (a telepített `@sentry/react-native@7.11.0` típusaiból és a hivatalos dokumentációból is hiányzik, az SDK ma már automatikusan kezeli az Expo Go detektálást).
+  - [i18n.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/i18n/i18n.ts): a `compatibilityJSON: 'v3'` eltávolítva (az i18next típusai csak `'v4'`-et fogadnak el; a nyelvi fájlok nem használnak v3-only plural szintaxist, tehát a beállítás no-op volt).
+  - [api.test.ts](file:///Z:/001_Workspace/smart-shopper-agent/mobile/src/services/api.test.ts): `global.fetch` → `globalThis.fetch` (a `global` Node-típus nincs deklarálva a projekt szűkített `tsconfig.json` `types` listájában).
+  - A [mobile-ci.yml](file:///Z:/001_Workspace/smart-shopper-agent/.github/workflows/mobile-ci.yml) kiegészült egy `npx tsc --noEmit` lépéssel, mivel most már tisztán lefut.
+- **`image-size` Dependabot riasztások (#41, #42, high):** a `mobile/package.json`-ban `overrides` bejegyzéssel a legújabb elérhető verzióra (`2.0.2`) pin-elve. **Fontos pontosítás:** a GitHub advisory (`GHSA-w3rx-r6r6-pgpr`, `GHSA-5p2g-fcmc-qvqq`) `first_patched_version: null` - vagyis **még nincs kiadott javítás** upstream, a riasztások valószínűleg nyitva maradnak. A tényleges kockázat alacsony: az `image-size` az Expo Metro bundler build-idejű, tranzitív függősége (asset-méret detektálás), nem kerül be a kiszállított alkalmazásba, és a projektben nincs olyan folyamat, amely nem megbízható forrásból származó képfájlt adna át neki.
+- **README és `.env.example` hiányok pótolva:** a repóban korábban nem volt `README.md`, a gyökér `.env.example` csak az `ADMIN_TOKEN`-t dokumentálta (hiányzott a kötelező `GEMINI_API_KEY` és az opcionális `ALLOWED_ORIGIN`/`TRUSTED_PROXIES`/`PRICES_FILE_PATH`), a `mobile/.env.example` pedig egyáltalán nem létezett a 4 ténylegesen használt `EXPO_PUBLIC_*` változó ellenére.
+- **Dokumentált, nyitva hagyott üzleti rés:** a 21. fázisban rögzített ingyenes/hirdetés-támogatott tier terve mindmáig nincs implementálva - nincs `AdBanner` komponens vagy AdMob-integráció a kódbázisban. Külső AdMob-fiók és platform-natív konfiguráció szükséges hozzá, ezért nem ebben a körben lett pótolva, csak a [README.md](file:///Z:/001_Workspace/smart-shopper-agent/README.md)-ben dokumentálva.
+
+### Szinkronizáció
+- A Go backend (`go build`, `go vet`, `go test ./...`) és a mobil (`npm test`, `npx tsc --noEmit`) tesztek minden commit után zöldek maradtak.
+- A frissített `main` ág feltöltésre került a GitHub-ra (`git push origin main`), majd mind a 110 immár felesleges távoli ág (85 ancestor + 25 felülvizsgált) törlésre került - a repóban jelenleg kizárólag a `main` ág létezik.
 
 
 
