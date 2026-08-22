@@ -609,3 +609,92 @@ func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestAPIHandler_checkAdminAuth(t *testing.T) {
+	tests := []struct {
+		name           string
+		setup          func(*APIHandler)
+		reqHeaderToken string
+		expectedBool   bool
+		expectedStatus int
+	}{
+		{
+			name: "Server configuration error - empty admin token",
+			setup: func(h *APIHandler) {
+				h.adminToken = ""
+				h.adminTokenBytes = []byte("")
+			},
+			reqHeaderToken: "some-token",
+			expectedBool:   false,
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Missing X-Admin-Token header",
+			setup: func(h *APIHandler) {
+				h.adminToken = "valid-token"
+				h.adminTokenBytes = []byte("valid-token")
+			},
+			reqHeaderToken: "",
+			expectedBool:   false,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Incorrect X-Admin-Token header",
+			setup: func(h *APIHandler) {
+				h.adminToken = "valid-token"
+				h.adminTokenBytes = []byte("valid-token")
+			},
+			reqHeaderToken: "invalid-token",
+			expectedBool:   false,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Correct X-Admin-Token header",
+			setup: func(h *APIHandler) {
+				h.adminToken = "valid-token"
+				h.adminTokenBytes = []byte("valid-token")
+			},
+			reqHeaderToken: "valid-token",
+			expectedBool:   true,
+			expectedStatus: http.StatusOK, // checkAdminAuth doesn't write status if true, but recorder defaults to 200
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewAPIHandler(nil, nil, nil)
+			tt.setup(h)
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tt.reqHeaderToken != "" {
+				req.Header.Set("X-Admin-Token", tt.reqHeaderToken)
+			}
+			rec := httptest.NewRecorder()
+
+			result := h.checkAdminAuth(rec, req)
+
+			if result != tt.expectedBool {
+				t.Errorf("Expected result %v, got %v", tt.expectedBool, result)
+			}
+
+			if tt.expectedBool {
+				// If true, it doesn't write anything to response
+				if rec.Code != http.StatusOK {
+					t.Errorf("Expected status %v, got %v", http.StatusOK, rec.Code)
+				}
+			} else {
+				if rec.Code != tt.expectedStatus {
+					t.Errorf("Expected status %v, got %v", tt.expectedStatus, rec.Code)
+				}
+
+				var errorResp ErrorResponse
+				if err := json.Unmarshal(rec.Body.Bytes(), &errorResp); err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if errorResp.Error == "" {
+					t.Error("Expected error message in response body")
+				}
+			}
+		})
+	}
+}
