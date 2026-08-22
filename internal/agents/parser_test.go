@@ -298,3 +298,71 @@ func TestParser_Parse_DefaultClientAndURL(t *testing.T) {
 		t.Fatalf("Expected an error due to fake key or network, got nil")
 	}
 }
+
+func TestParser_doAttempt_Success(t *testing.T) {
+	mockResponseJSON := `{"candidates":[{"content":{"parts":[{"text":"{\"items\": [{\"name\": \"milk\", \"quantity\": 1}]}"}]}}]}`
+	mockClient := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString(mockResponseJSON)),
+			Header:     make(http.Header),
+		}
+	})
+
+	parser := NewParser()
+	result, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(result.Items) != 1 {
+		t.Fatalf("Expected 1 item, got %d", len(result.Items))
+	}
+	if result.Items[0].Name != "milk" {
+		t.Errorf("Expected item name 'milk', got %s", result.Items[0].Name)
+	}
+	if result.Items[0].Quantity != 1 {
+		t.Errorf("Expected item quantity 1, got %d", result.Items[0].Quantity)
+	}
+}
+
+func TestParser_doAttempt_NetworkError(t *testing.T) {
+
+	// Better to use mockTransport directly for returning an error
+	originalTransport := http.DefaultTransport
+	http.DefaultTransport = &mockTransport{
+		roundTripFunc: func(req *http.Request) (*http.Response, error) {
+			return nil, errors.New("simulated network error")
+		},
+	}
+	defer func() { http.DefaultTransport = originalTransport }()
+
+	parser := NewParser()
+	// Need to use default client so it uses our mock transport
+	_, err := parser.doAttempt(parser.Client, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	if err == nil {
+		t.Fatalf("Expected network error, got nil")
+	}
+	if !strings.Contains(err.Error(), "Gemini API network error") {
+		t.Errorf("Expected 'Gemini API network error', got %v", err)
+	}
+}
+
+func TestParser_doAttempt_DecodeError(t *testing.T) {
+	mockClient := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString(`invalid json body`)),
+			Header:     make(http.Header),
+		}
+	})
+
+	parser := NewParser()
+	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	if err == nil {
+		t.Fatalf("Expected decode error, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed to decode response") {
+		t.Errorf("Expected 'failed to decode response', got %v", err)
+	}
+}
