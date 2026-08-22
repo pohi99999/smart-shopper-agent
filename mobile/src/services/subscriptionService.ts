@@ -113,9 +113,6 @@ export async function purchaseSubscription(
 ): Promise<SubscriptionStatus> {
   const initialized = initRevenueCat();
   if (!initialized) {
-    if (__DEV__) {
-      console.log(`[SubscriptionService] Mock purchase executed (no API key configured): ${productId}`);
-    }
     return {
       isPro: true,
       expiresAt: _mockExpiryDate(productId),
