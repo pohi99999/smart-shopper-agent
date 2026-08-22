@@ -2,6 +2,7 @@ package agents
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -79,8 +80,8 @@ func buildRequestBody(input string) ([]byte, error) {
 	return json.Marshal(reqBody)
 }
 
-func (p *Parser) doAttempt(client *http.Client, apiURL, apiKey string, jsonData []byte, attempt int) (models.ShoppingList, error) {
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
+func (p *Parser) doAttempt(ctx context.Context, client *http.Client, apiURL, apiKey string, jsonData []byte, attempt int) (models.ShoppingList, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return models.ShoppingList{}, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
@@ -114,7 +115,7 @@ func (p *Parser) doAttempt(client *http.Client, apiURL, apiKey string, jsonData 
 	return shoppingList, nil
 }
 
-func (p *Parser) Parse(input string) (models.ShoppingList, error) {
+func (p *Parser) Parse(ctx context.Context, input string) (models.ShoppingList, error) {
 	apiKey := p.APIKey
 	if apiKey == "" || apiKey == "your_api_key_here" {
 		return models.ShoppingList{}, fmt.Errorf("GEMINI_API_KEY is not set or invalid")
@@ -141,9 +142,16 @@ func (p *Parser) Parse(input string) (models.ShoppingList, error) {
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		if attempt > 0 {
-			time.Sleep(baseDelay * time.Duration(1<<(attempt-1)))
+			delay := baseDelay * time.Duration(1<<(attempt-1))
+			timer := time.NewTimer(delay)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return models.ShoppingList{}, ctx.Err()
+			case <-timer.C:
+			}
 		}
-		shoppingList, err := p.doAttempt(client, apiURL, apiKey, jsonData, attempt)
+		shoppingList, err := p.doAttempt(ctx, client, apiURL, apiKey, jsonData, attempt)
 		if err != nil {
 			lastErr = err
 			continue

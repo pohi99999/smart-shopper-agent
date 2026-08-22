@@ -2,6 +2,7 @@ package agents
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -30,7 +31,7 @@ func TestParser_Parse_MissingKey(t *testing.T) {
 	parser := NewParser()
 	parser.APIKey = ""
 
-	_, err := parser.Parse("veszek valamit")
+	_, err := parser.Parse(context.Background(), "veszek valamit")
 	if err == nil {
 		t.Fatalf("Expected an error due to missing API key, got nil")
 	}
@@ -50,7 +51,7 @@ func TestParser_Parse_Live_Error(t *testing.T) {
 	parser := NewParser()
 	parser.APIKey = "invalid_fake_key_123"
 
-	_, err := parser.Parse("veszek valamit")
+	_, err := parser.Parse(context.Background(), "veszek valamit")
 	if err == nil {
 		t.Fatalf("Expected an error due to invalid API key, got nil")
 	}
@@ -75,7 +76,7 @@ func TestParser_Parse_Success(t *testing.T) {
 	parser.APIKey = "test_mock_api_key"
 	parser.Client = mockClient
 
-	result, err := parser.Parse("buy 1 milk")
+	result, err := parser.Parse(context.Background(), "buy 1 milk")
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -119,7 +120,7 @@ func TestParser_Parse_BadJSONResponse(t *testing.T) {
 	parser := NewParser()
 	parser.APIKey = "dummy_key"
 
-	_, err := parser.Parse("veszek valamit")
+	_, err := parser.Parse(context.Background(), "veszek valamit")
 	if err == nil {
 		t.Fatalf("Expected an error due to bad JSON response, got nil")
 	}
@@ -207,7 +208,7 @@ func TestParser_Parse_NetworkError(t *testing.T) {
 	// Fast fail for retries
 	parser.Client.Timeout = 1 * time.Millisecond
 
-	_, err := parser.Parse("buy 1 milk")
+	_, err := parser.Parse(context.Background(), "buy 1 milk")
 	if err == nil {
 		t.Fatalf("Expected an error due to network failure, got nil")
 	}
@@ -219,7 +220,7 @@ func TestParser_Parse_NetworkError(t *testing.T) {
 func TestParser_doAttempt_BadURL(t *testing.T) {
 	parser := NewParser()
 	badURL := string([]byte{0x7f}) // Invalid control character for URL
-	_, err := parser.doAttempt(http.DefaultClient, badURL, "dummy_key", []byte(`{}`), 0)
+	_, err := parser.doAttempt(context.Background(), http.DefaultClient, badURL, "dummy_key", []byte(`{}`), 0)
 	if err == nil {
 		t.Fatalf("Expected an error due to invalid URL, got nil")
 	}
@@ -238,7 +239,7 @@ func TestParser_doAttempt_BadStatus(t *testing.T) {
 	})
 
 	parser := NewParser()
-	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	_, err := parser.doAttempt(context.Background(), mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
 	if err == nil {
 		t.Fatalf("Expected an error due to bad status code, got nil")
 	}
@@ -257,7 +258,7 @@ func TestParser_doAttempt_EmptyCandidates(t *testing.T) {
 	})
 
 	parser := NewParser()
-	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	_, err := parser.doAttempt(context.Background(), mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
 	if err == nil {
 		t.Fatalf("Expected an error due to empty candidates, got nil")
 	}
@@ -276,7 +277,7 @@ func TestParser_doAttempt_BadShoppingListJSON(t *testing.T) {
 	})
 
 	parser := NewParser()
-	_, err := parser.doAttempt(mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
+	_, err := parser.doAttempt(context.Background(), mockClient, "http://dummy", "dummy_key", []byte(`{}`), 0)
 	if err == nil {
 		t.Fatalf("Expected an error due to bad shopping list JSON, got nil")
 	}
@@ -293,7 +294,7 @@ func TestParser_Parse_DefaultClientAndURL(t *testing.T) {
 	// We'll give it a fake key so it fails on auth if it gets that far.
 	parser.APIKey = "fake_key_for_defaults"
 
-	_, err := parser.Parse("veszek valamit")
+	_, err := parser.Parse(context.Background(), "veszek valamit")
 	if err == nil {
 		t.Fatalf("Expected an error due to fake key or network, got nil")
 	}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -111,7 +112,7 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.processOptimization(req)
+	resp, err := h.processOptimization(r.Context(), req)
 	if err != nil {
 		SendJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -145,9 +146,9 @@ func (h *APIHandler) parseOptimizeRequest(w http.ResponseWriter, r *http.Request
 	return &req, true
 }
 
-func (h *APIHandler) processOptimization(req *OptimizeRequest) (*OptimizeResponse, error) {
+func (h *APIHandler) processOptimization(ctx context.Context, req *OptimizeRequest) (*OptimizeResponse, error) {
 	// 1. Parser
-	shoppingList, err := h.parser.Parse(req.UserInput)
+	shoppingList, err := h.parser.Parse(ctx, req.UserInput)
 	if err != nil {
 		return nil, errors.New("Parser error: " + err.Error())
 	}
