@@ -698,3 +698,91 @@ func TestAPIHandler_checkAdminAuth(t *testing.T) {
 		})
 	}
 }
+
+func TestParseOptimizeRequest(t *testing.T) {
+	handler := NewAPIHandler(nil, nil, nil)
+
+	tests := []struct {
+		name           string
+		method         string
+		body           string
+		expectedStatus int
+		expectedBool   bool
+		expectedErr    string
+	}{
+		{
+			name:           "Valid request",
+			method:         http.MethodPost,
+			body:           `{"user_input": "10 tojás és egy kenyér", "coords": {"lat": 47.4979, "lon": 19.0402}}`,
+			expectedStatus: http.StatusOK,
+			expectedBool:   true,
+		},
+		{
+			name:           "Method not allowed",
+			method:         http.MethodGet,
+			body:           `{"user_input": "10 tojás és egy kenyér"}`,
+			expectedStatus: http.StatusMethodNotAllowed,
+			expectedBool:   false,
+			expectedErr:    "Method not allowed",
+		},
+		{
+			name:           "Invalid JSON",
+			method:         http.MethodPost,
+			body:           `{"user_input": "10 tojás és egy kenyér"`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBool:   false,
+			expectedErr:    "Invalid request body",
+		},
+		{
+			name:           "Input too long",
+			method:         http.MethodPost,
+			body:           `{"user_input": "` + string(bytes.Repeat([]byte("a"), 2001)) + `", "coords": {"lat": 47.4979, "lon": 19.0402}}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBool:   false,
+			expectedErr:    "Input too long",
+		},
+		{
+			name:           "Missing fields",
+			method:         http.MethodPost,
+			body:           `{}`, // Valid JSON, but missing fields. Go json unmarshaler leaves defaults. Our handler accepts this (no error explicitly thrown for missing fields, just an empty OptimizeRequest struct) so the function will return true and no error.
+			expectedStatus: http.StatusOK,
+			expectedBool:   true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, "/api/v1/optimize", bytes.NewBufferString(tc.body))
+			rec := httptest.NewRecorder()
+
+			resReq, ok := handler.parseOptimizeRequest(rec, req)
+
+			if ok != tc.expectedBool {
+				t.Errorf("expected bool %v, got %v", tc.expectedBool, ok)
+			}
+
+			if !ok {
+				if rec.Code != tc.expectedStatus {
+					t.Errorf("expected status %d, got %d", tc.expectedStatus, rec.Code)
+				}
+
+				var errResp ErrorResponse
+				if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+					t.Fatalf("failed to decode error response: %v", err)
+				}
+
+				if errResp.Error != tc.expectedErr {
+					t.Errorf("expected error message %q, got %q", tc.expectedErr, errResp.Error)
+				}
+
+				if errResp.Code != tc.expectedStatus {
+					t.Errorf("expected error code %d, got %d", tc.expectedStatus, errResp.Code)
+				}
+			} else {
+				if resReq == nil {
+					t.Errorf("expected parsed request to not be nil")
+				}
+			}
+		})
+	}
+}
