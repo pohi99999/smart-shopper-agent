@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -111,7 +113,7 @@ func (h *APIHandler) OptimizeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.processOptimization(req)
+	resp, err := h.processOptimization(r.Context(), req)
 	if err != nil {
 		SendJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -142,12 +144,22 @@ func (h *APIHandler) parseOptimizeRequest(w http.ResponseWriter, r *http.Request
 		return nil, false
 	}
 
+	if req.UserCoords.Latitude < -90 || req.UserCoords.Latitude > 90 {
+		SendJSONError(w, "Invalid latitude", http.StatusBadRequest)
+		return nil, false
+	}
+
+	if req.UserCoords.Longitude < -180 || req.UserCoords.Longitude > 180 {
+		SendJSONError(w, "Invalid longitude", http.StatusBadRequest)
+		return nil, false
+	}
+
 	return &req, true
 }
 
-func (h *APIHandler) processOptimization(req *OptimizeRequest) (*OptimizeResponse, error) {
+func (h *APIHandler) processOptimization(ctx context.Context, req *OptimizeRequest) (*OptimizeResponse, error) {
 	// 1. Parser
-	shoppingList, err := h.parser.Parse(req.UserInput)
+	shoppingList, err := h.parser.Parse(ctx, req.UserInput)
 	if err != nil {
 		return nil, errors.New("Parser error: " + err.Error())
 	}
@@ -184,9 +196,11 @@ func (h *APIHandler) checkAdminAuth(w http.ResponseWriter, r *http.Request) bool
 	}
 
 	token := r.Header.Get("X-Admin-Token")
-	providedTokenBytes := []byte(token)
 
-	if len(providedTokenBytes) != len(h.adminTokenBytes) || subtle.ConstantTimeCompare(providedTokenBytes, h.adminTokenBytes) != 1 {
+	expectedHash := sha256.Sum256(h.adminTokenBytes)
+	providedHash := sha256.Sum256([]byte(token))
+
+	if subtle.ConstantTimeCompare(expectedHash[:], providedHash[:]) != 1 {
 		SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}

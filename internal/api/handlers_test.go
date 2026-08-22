@@ -290,6 +290,61 @@ func TestOptimizeHandler_InvalidMethodAndBody(t *testing.T) {
 			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
 		}
 	})
+	t.Run("Invalid Latitude", func(t *testing.T) {
+		reqBody := OptimizeRequest{
+			UserInput: "tej",
+			UserCoords: mcp.Coordinates{
+				Latitude:  100.0,
+				Longitude: 16.0,
+			},
+		}
+		body, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+
+		var errResp ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("Failed to decode JSON error response: %v", err)
+		}
+
+		if errResp.Error != "Invalid latitude" {
+			t.Errorf("Expected error message 'Invalid latitude', got '%s'", errResp.Error)
+		}
+	})
+
+	t.Run("Invalid Longitude", func(t *testing.T) {
+		reqBody := OptimizeRequest{
+			UserInput: "tej",
+			UserCoords: mcp.Coordinates{
+				Latitude:  46.0,
+				Longitude: 200.0,
+			},
+		}
+		body, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/optimize", bytes.NewBuffer(body))
+		rec := httptest.NewRecorder()
+
+		handler.OptimizeHandler(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", rec.Code)
+		}
+
+		var errResp ErrorResponse
+		if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+			t.Fatalf("Failed to decode JSON error response: %v", err)
+		}
+
+		if errResp.Error != "Invalid longitude" {
+			t.Errorf("Expected error message 'Invalid longitude', got '%s'", errResp.Error)
+		}
+	})
 }
 
 func TestOptimizeHandler_Integration(t *testing.T) {
@@ -608,4 +663,181 @@ func TestAPIHandler_getPricesData_DoubleCheck(t *testing.T) {
 	handler.pricesCacheMut.Unlock()
 
 	wg.Wait()
+}
+
+func TestAPIHandler_checkAdminAuth(t *testing.T) {
+	tests := []struct {
+		name           string
+		setup          func(*APIHandler)
+		reqHeaderToken string
+		expectedBool   bool
+		expectedStatus int
+	}{
+		{
+			name: "Server configuration error - empty admin token",
+			setup: func(h *APIHandler) {
+				h.adminToken = ""
+				h.adminTokenBytes = []byte("")
+			},
+			reqHeaderToken: "some-token",
+			expectedBool:   false,
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "Missing X-Admin-Token header",
+			setup: func(h *APIHandler) {
+				h.adminToken = "valid-token"
+				h.adminTokenBytes = []byte("valid-token")
+			},
+			reqHeaderToken: "",
+			expectedBool:   false,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Incorrect X-Admin-Token header",
+			setup: func(h *APIHandler) {
+				h.adminToken = "valid-token"
+				h.adminTokenBytes = []byte("valid-token")
+			},
+			reqHeaderToken: "invalid-token",
+			expectedBool:   false,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Correct X-Admin-Token header",
+			setup: func(h *APIHandler) {
+				h.adminToken = "valid-token"
+				h.adminTokenBytes = []byte("valid-token")
+			},
+			reqHeaderToken: "valid-token",
+			expectedBool:   true,
+			expectedStatus: http.StatusOK, // checkAdminAuth doesn't write status if true, but recorder defaults to 200
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewAPIHandler(nil, nil, nil)
+			tt.setup(h)
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tt.reqHeaderToken != "" {
+				req.Header.Set("X-Admin-Token", tt.reqHeaderToken)
+			}
+			rec := httptest.NewRecorder()
+
+			result := h.checkAdminAuth(rec, req)
+
+			if result != tt.expectedBool {
+				t.Errorf("Expected result %v, got %v", tt.expectedBool, result)
+			}
+
+			if tt.expectedBool {
+				// If true, it doesn't write anything to response
+				if rec.Code != http.StatusOK {
+					t.Errorf("Expected status %v, got %v", http.StatusOK, rec.Code)
+				}
+			} else {
+				if rec.Code != tt.expectedStatus {
+					t.Errorf("Expected status %v, got %v", tt.expectedStatus, rec.Code)
+				}
+
+				var errorResp ErrorResponse
+				if err := json.Unmarshal(rec.Body.Bytes(), &errorResp); err != nil {
+					t.Fatalf("Failed to decode response: %v", err)
+				}
+				if errorResp.Error == "" {
+					t.Error("Expected error message in response body")
+				}
+			}
+		})
+	}
+}
+
+func TestParseOptimizeRequest(t *testing.T) {
+	handler := NewAPIHandler(nil, nil, nil)
+
+	tests := []struct {
+		name           string
+		method         string
+		body           string
+		expectedStatus int
+		expectedBool   bool
+		expectedErr    string
+	}{
+		{
+			name:           "Valid request",
+			method:         http.MethodPost,
+			body:           `{"user_input": "10 tojás és egy kenyér", "coords": {"lat": 47.4979, "lon": 19.0402}}`,
+			expectedStatus: http.StatusOK,
+			expectedBool:   true,
+		},
+		{
+			name:           "Method not allowed",
+			method:         http.MethodGet,
+			body:           `{"user_input": "10 tojás és egy kenyér"}`,
+			expectedStatus: http.StatusMethodNotAllowed,
+			expectedBool:   false,
+			expectedErr:    "Method not allowed",
+		},
+		{
+			name:           "Invalid JSON",
+			method:         http.MethodPost,
+			body:           `{"user_input": "10 tojás és egy kenyér"`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBool:   false,
+			expectedErr:    "Invalid request body",
+		},
+		{
+			name:           "Input too long",
+			method:         http.MethodPost,
+			body:           `{"user_input": "` + string(bytes.Repeat([]byte("a"), 2001)) + `", "coords": {"lat": 47.4979, "lon": 19.0402}}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBool:   false,
+			expectedErr:    "Input too long",
+		},
+		{
+			name:           "Missing fields",
+			method:         http.MethodPost,
+			body:           `{}`, // Valid JSON, but missing fields. Go json unmarshaler leaves defaults. Our handler accepts this (no error explicitly thrown for missing fields, just an empty OptimizeRequest struct) so the function will return true and no error.
+			expectedStatus: http.StatusOK,
+			expectedBool:   true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, "/api/v1/optimize", bytes.NewBufferString(tc.body))
+			rec := httptest.NewRecorder()
+
+			resReq, ok := handler.parseOptimizeRequest(rec, req)
+
+			if ok != tc.expectedBool {
+				t.Errorf("expected bool %v, got %v", tc.expectedBool, ok)
+			}
+
+			if !ok {
+				if rec.Code != tc.expectedStatus {
+					t.Errorf("expected status %d, got %d", tc.expectedStatus, rec.Code)
+				}
+
+				var errResp ErrorResponse
+				if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+					t.Fatalf("failed to decode error response: %v", err)
+				}
+
+				if errResp.Error != tc.expectedErr {
+					t.Errorf("expected error message %q, got %q", tc.expectedErr, errResp.Error)
+				}
+
+				if errResp.Code != tc.expectedStatus {
+					t.Errorf("expected error code %d, got %d", tc.expectedStatus, errResp.Code)
+				}
+			} else {
+				if resReq == nil {
+					t.Errorf("expected parsed request to not be nil")
+				}
+			}
+		})
+	}
 }

@@ -18,8 +18,8 @@ func TestCIDRTrie_Basic(t *testing.T) {
 	_, ipNet3, _ := net.ParseCIDR("2001:db8::/32")
 	trie.AddIPNet(ipNet3)
 
-	tests := []struct{
-		ip string
+	tests := []struct {
+		ip       string
 		expected bool
 	}{
 		{"192.168.1.100", true},

@@ -1,9 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -457,5 +459,94 @@ func TestIsTrustedProxy(t *testing.T) {
 				t.Errorf("isTrustedProxy(%q) = %v; want %v", tt.ip, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestRateLimiterGetLimiterConcurrency(t *testing.T) {
+	rl := NewRateLimiter(rate.Every(time.Minute), 1)
+	defer rl.Stop()
+
+	// Test 1: Concurrent requests for the same IP
+	t.Run("Same IP", func(t *testing.T) {
+		const numGoroutines = 100
+		ip := "192.168.1.100"
+		limiters := make([]*rate.Limiter, numGoroutines)
+		var wg sync.WaitGroup
+
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				limiters[idx] = rl.getLimiter(ip)
+			}(i)
+		}
+		wg.Wait()
+
+		// All goroutines should have received the exact same limiter instance
+		firstLimiter := limiters[0]
+		for i := 1; i < numGoroutines; i++ {
+			if limiters[i] != firstLimiter {
+				t.Errorf("Expected all limiters for the same IP to be identical. Mismatch at index %d", i)
+			}
+		}
+	})
+
+	// Test 2: Concurrent requests for different IPs
+	t.Run("Different IPs", func(t *testing.T) {
+		const numGoroutines = 100
+		limiters := make([]*rate.Limiter, numGoroutines)
+		var wg sync.WaitGroup
+
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				ip := fmt.Sprintf("10.0.0.%d", idx)
+				limiters[idx] = rl.getLimiter(ip)
+			}(i)
+		}
+		wg.Wait()
+
+		// All goroutines should have received different limiter instances
+		seen := make(map[*rate.Limiter]bool)
+		for i := 0; i < numGoroutines; i++ {
+			if seen[limiters[i]] {
+				t.Errorf("Expected all limiters for different IPs to be unique. Duplicate found at index %d", i)
+			}
+			seen[limiters[i]] = true
+		}
+	})
+}
+
+func TestRateLimiter_runCleanup(t *testing.T) {
+	// Initialize a rate limiter manually without starting the goroutine via NewRateLimiter
+	rl := &rateLimiter{
+		rate:  rate.Every(time.Minute / 10),
+		burst: 10,
+		stop:  make(chan struct{}),
+	}
+	for i := 0; i < numShards; i++ {
+		rl.shards[i] = &rateLimiterShard{
+			visitors: make(map[string]*visitor),
+		}
+	}
+
+	done := make(chan struct{})
+
+	// Start runCleanup in a goroutine
+	go func() {
+		rl.runCleanup()
+		close(done)
+	}()
+
+	// Signal it to stop
+	rl.Stop()
+
+	// Wait for termination with a timeout
+	select {
+	case <-done:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Fatal("runCleanup did not terminate after Stop() was called")
 	}
 }
