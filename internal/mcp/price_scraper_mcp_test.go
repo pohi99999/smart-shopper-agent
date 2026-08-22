@@ -166,28 +166,55 @@ func TestScrapePrices(t *testing.T) {
 }
 
 func TestGetShopChains(t *testing.T) {
-	ps := &PriceScraper{}
-	ps.SetShopsForTesting(map[string]ShopData{
-		"Aldi":      {},
-		"Interspar": {},
-		"Tesco":     {},
-	})
-
-	chains := ps.GetShopChains()
-	if len(chains) != 3 {
-		t.Errorf("expected 3 chains, got %d", len(chains))
+	tests := []struct {
+		name     string
+		shops    map[string]ShopData
+		expected []string
+	}{
+		{
+			name:     "Empty shops",
+			shops:    map[string]ShopData{},
+			expected: []string{},
+		},
+		{
+			name: "Single shop",
+			shops: map[string]ShopData{
+				"Aldi": {},
+			},
+			expected: []string{"Aldi"},
+		},
+		{
+			name: "Multiple shops",
+			shops: map[string]ShopData{
+				"Aldi":      {},
+				"Interspar": {},
+				"Tesco":     {},
+			},
+			expected: []string{"Aldi", "Interspar", "Tesco"},
+		},
 	}
 
-	found := map[string]bool{}
-	for _, c := range chains {
-		found[c] = true
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ps := &PriceScraper{}
+			ps.SetShopsForTesting(tt.shops)
 
-	expected := []string{"Aldi", "Interspar", "Tesco"}
-	for _, e := range expected {
-		if !found[e] {
-			t.Errorf("expected to find chain %s", e)
-		}
+			chains := ps.GetShopChains()
+			if len(chains) != len(tt.expected) {
+				t.Fatalf("expected %d chains, got %d", len(tt.expected), len(chains))
+			}
+
+			found := map[string]bool{}
+			for _, c := range chains {
+				found[c] = true
+			}
+
+			for _, e := range tt.expected {
+				if !found[e] {
+					t.Errorf("expected to find chain %s", e)
+				}
+			}
+		})
 	}
 }
 
